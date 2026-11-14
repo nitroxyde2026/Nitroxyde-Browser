@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr"><meta charset="utf-8"><title>Notification</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+html,body{height:100%;margin:0;overflow:hidden;background:transparent;font:13px/1.35 "Segoe UI Variable",system-ui,sans-serif;user-select:none}
+body{box-sizing:border-box;display:flex;justify-content:center;align-items:flex-start;padding:4px 10px 0}
+#t{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:var(--bg);color:var(--tx);
+  box-shadow:0 2px 6px #0006;
+  transform:translateY(-140%) scale(.96);opacity:0;transition:transform .38s cubic-bezier(.2,1.25,.3,1),opacity .22s}
+#t.in{transform:none;opacity:1}
+#ic{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;background:var(--bg3);font-size:18px}
+#tx{flex:1;min-width:0}
+#ti{display:block;overflow:hidden;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+#tt{display:block;overflow:hidden;color:var(--dim);text-overflow:ellipsis;white-space:nowrap}
+#ac{display:flex;gap:6px}
+#tin{box-sizing:border-box;width:100%;margin-top:4px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--tx);font:inherit;outline:0;user-select:text}
+#tin:focus{border-color:var(--ac)}
+#tt[hidden],#tin[hidden]{display:none}
+#ac button{padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg3);color:var(--tx);font:inherit;cursor:pointer;transition:border-color .15s}
+#ac button:first-child{border-color:var(--ac);background:var(--ac);color:var(--bg);font-weight:600}
+#ac button:hover{border-color:var(--ac)}
+#t.timed::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:2px;border-radius:2px;background:var(--ac);box-shadow:0 0 8px var(--gl);transform-origin:left;animation:run var(--ms) linear forwards}
+@keyframes run{to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){#t{transition:opacity .2s}}
+</style>
+<body class="ov">
+<div id="t"><span id="ic"></span><span id="tx"><b id="ti"></b><span id="tt"></span><input id="tin" hidden spellcheck="false"></span><div id="ac"></div></div>
+<script src="skin.js"></script>
+<script src="toast.js"></script>

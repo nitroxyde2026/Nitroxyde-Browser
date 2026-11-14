@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:">
+  <title>Nitroxyde Navigation</title>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="tabs"><button id="plus" title="Nouvel onglet (Ctrl+T)">+</button></header>
+  <nav id="bar">
+    <button id="back" title="Précédent">‹</button>
+    <button id="fwd" title="Suivant">›</button>
+    <button id="rl" title="Actualiser (Ctrl+R)">↻</button>
+    <button id="home" title="Page d'accueil">⌂</button>
+    <input id="url" spellcheck="false" placeholder="Rechercher ou saisir une adresse" list="sg">
+    <datalist id="sg"></datalist>
+    <span id="hud" hidden></span>
+    <button id="shield" title="Bouclier : éléments bloqués sur cette page">🛡<span id="sc"></span></button>
+    <button id="ai" title="Assistant IA (Ctrl+Maj+A)">✦</button>
+    <button id="music" title="Musique : clic pour pause, clic droit pour les pistes">♪</button>
+    <button id="star" title="Ajouter aux favoris (Ctrl+D)">☆</button>
+    <button id="vpn" title="VPN (Alt+V)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.8 4.5 5.6v5.6c0 4.6 3.1 8.6 7.5 10 4.4-1.4 7.5-5.4 7.5-10V5.6z"/><path class="ck" d="m8.6 12 2.4 2.4 4.6-4.8" stroke-linecap="round"/></svg><span id="vcc">VPN</span></button>
+    <button id="menu" title="Menu (Alt+F)">☰</button>
+  </nav>
+  <aside id="rail"></aside>
+  <div id="sidehead" hidden></div>
+  <div id="grip" hidden title="Glisser pour élargir le panneau · double-clic : taille par défaut"></div>
+  <div id="find" hidden>
+    <input id="q" spellcheck="false" placeholder="Rechercher dans la page"><span id="cnt"></span>
+    <button id="fp" title="Précédent">↑</button><button id="fn" title="Suivant">↓</button><button id="fx" title="Fermer (Échap)">✕</button>
+  </div>
+  <div id="load"></div>
+  <audio id="bgm" hidden></audio>
+  <script src="skin.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

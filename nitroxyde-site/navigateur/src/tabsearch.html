@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr"><meta charset="utf-8"><title>Rechercher un onglet</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+html,body{height:100%;margin:0;box-sizing:border-box;overflow:hidden;background:transparent;font:14px "Segoe UI Variable",system-ui,sans-serif;user-select:none}
+#box{box-sizing:border-box;display:flex;flex-direction:column;height:100%;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--bg);color:var(--tx);box-shadow:0 3px 8px #0007}
+#q{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--tx);font:inherit;font-size:16px;outline:0;user-select:text}
+#q:focus{border-color:var(--ac)}
+#list{flex:1;margin-top:8px;overflow-y:auto}
+.it{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;cursor:pointer}
+.it.on,.it:hover{background:var(--bg3)}
+.it b{flex:1;overflow:hidden;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+.it small{max-width:200px;overflow:hidden;color:var(--dim);text-overflow:ellipsis;white-space:nowrap}
+.none{padding:18px;color:var(--dim);text-align:center}
+</style>
+<body class="ov">
+<div id="box"><input id="q" placeholder="Rechercher parmi tous les onglets…" spellcheck="false"><div id="list"></div></div>
+<script src="skin.js"></script>
+<script src="tabsearch.js"></script>

@@ -1,0 +1,166 @@
+
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font:13px/1 "Segoe UI Variable",system-ui,sans-serif;overflow:hidden;user-select:none}
+button{font:inherit;cursor:default}
+button:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+
+#tabs{height:40px;display:flex;align-items:flex-end;gap:2px;padding:6px 150px 0 8px;-webkit-app-region:drag}
+[data-os=darwin] #tabs{padding-left:80px}
+.tab,#plus,#bar button,#url{-webkit-app-region:no-drag}
+
+.tab{position:relative;display:flex;align-items:center;gap:8px;flex:0 1 220px;min-width:0;height:34px;padding:0 10px;
+  border-radius:10px 10px 0 0;color:var(--dim);transition:background-color .15s,color .15s;
+  animation:in .2s cubic-bezier(.2,.8,.2,1)}
+.tab:hover,.tab.on{background:var(--bg2);color:var(--tx)}
+.tab.on::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:2px;border-radius:2px;
+  background:var(--ac);box-shadow:0 0 12px 1px var(--gl)}
+.tab.zzz{opacity:.45}
+.tab img{width:14px;height:14px;border-radius:3px}
+.tab .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab .x{width:18px;height:18px;display:grid;place-items:center;border-radius:50%;opacity:0;transition:opacity .15s,background-color .15s}
+.tab:hover .x{opacity:1}
+.tab .x:hover{background:var(--bg3)}
+.tab.out{animation:none;flex-shrink:0;max-width:0!important;min-width:0;padding-left:0;padding-right:0;margin-left:0;margin-right:0;gap:0;opacity:0;overflow:hidden;transition:max-width .18s cubic-bezier(.4,0,.2,1),padding .18s,margin .18s,opacity .12s}
+[data-pos=left] .tab.out,[data-pos=right] .tab.out{max-height:0!important;max-width:none!important;height:0;transition:max-height .18s cubic-bezier(.4,0,.2,1),height .18s,opacity .12s}
+[data-anim=off] #tabs .tab.out{transition:max-width .16s cubic-bezier(.4,0,.2,1),max-height .16s,padding .16s,margin .16s,opacity .1s!important}   /* même en Gaming : un repli court et fluide */
+
+#plus,#bar button{border:0;background:none;color:var(--dim);border-radius:8px;transition:background-color .15s,color .15s}
+#plus{width:30px;height:30px;margin:0 0 2px 4px;font-size:18px}
+#plus:hover,#bar button:hover{background:var(--bg3);color:var(--tx)}
+
+#bar{height:48px;display:flex;align-items:center;gap:6px;padding:0 10px;background:var(--bg2)}
+#bar button{width:32px;height:32px;font-size:20px}
+#bar button:disabled{opacity:.3;pointer-events:none}
+#url{flex:1;height:34px;padding:0 16px;border:1px solid var(--bg3);border-radius:17px;background:var(--bg);
+  color:var(--tx);font:inherit;outline:0;user-select:text;transition:border-color .15s,box-shadow .15s}
+#url:focus{border-color:var(--ac);box-shadow:0 0 18px #a9c8ff44}
+
+/* Barre de chargement : une comète qui traverse l'écran (transform uniquement) */
+#load{position:absolute;left:0;right:0;top:86px;height:2px;overflow:hidden;opacity:0;transition:opacity .2s;pointer-events:none}
+#load::before{content:"";position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,var(--ac));box-shadow:0 0 10px var(--gl)}
+#load.on{opacity:1}
+#load.on::before{animation:sl 1s cubic-bezier(.4,0,.2,1) infinite}
+
+@keyframes in{from{opacity:0;transform:translateY(8px) scale(.96)}}
+@keyframes out{to{opacity:0;transform:scale(.9)}}
+@keyframes sl{to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Favoris, recherche dans la page, onglets privés */
+#star.on{color:var(--ac);text-shadow:0 0 10px var(--gl)}
+#find{position:absolute;top:88px;left:0;right:0;height:40px;display:flex;align-items:center;gap:6px;padding:0 10px;background:var(--bg2);border-top:1px solid var(--bg3)}
+#find[hidden]{display:none}
+#find input{width:280px;height:28px;padding:0 12px;border:1px solid var(--bg3);border-radius:14px;background:var(--bg);color:var(--tx);font:inherit;outline:0;user-select:text}
+#find input:focus{border-color:var(--ac)}
+#find button{width:28px;height:28px;border:0;border-radius:8px;background:none;color:var(--dim)}
+#find button:hover{background:var(--bg3);color:var(--tx)}
+#cnt{min-width:48px;color:var(--dim)}
+.tab.priv .t::before{content:"◐ "}
+
+/* Bouton musique */
+#bar #music{font-size:17px}
+#music.on{color:var(--ac);text-shadow:0 0 10px var(--gl)}
+
+/* Position de la barre d'onglets : haut (défaut), bas, gauche, droite */
+:root{--top:88px;--sl:0px;--sr:0px}
+[data-pos=bottom],[data-pos=left],[data-pos=right]{--top:48px}
+[data-pos=left]{--sl:232px}
+[data-pos=right]{--sr:232px}
+#find{top:var(--top);left:var(--sl);right:var(--sr)}
+#load{top:calc(var(--top) - 2px);left:var(--sl);right:var(--sr)}
+[data-pos=bottom] #bar,[data-pos=left] #bar,[data-pos=right] #bar{position:absolute;top:0;left:0;right:0;padding-right:150px;-webkit-app-region:drag}
+[data-pos=bottom] #tabs{position:absolute;left:0;right:0;bottom:0;height:40px;align-items:flex-start;padding:0 8px;-webkit-app-region:no-drag}
+[data-pos=bottom] .tab{border-radius:0 0 10px 10px}
+[data-pos=bottom] .tab.on::after{top:0;bottom:auto}
+[data-pos=left] #tabs,[data-pos=right] #tabs{position:absolute;top:48px;bottom:0;width:232px;height:auto;flex-direction:column;align-items:stretch;gap:2px;padding:8px;overflow-y:auto;background:var(--bg2);-webkit-app-region:no-drag}
+[data-pos=left] #tabs{left:0}
+[data-pos=right] #tabs{right:0}
+[data-pos=left] .tab,[data-pos=right] .tab{flex:none;height:36px;border-radius:10px}
+[data-pos=left] .tab.on::after,[data-pos=right] .tab.on::after{top:8px;bottom:8px;left:0;right:auto;width:3px;height:auto}
+[data-pos=right] .tab.on::after{left:auto;right:0}
+[data-pos=left] #plus,[data-pos=right] #plus{width:100%;margin:2px 0 0}
+
+/* Disque de musique : il tourne quand la musique joue */
+#bar #music{position:relative;width:30px;height:30px;padding:0;border-radius:50%;color:transparent;font-size:0;box-shadow:inset 0 0 0 1px var(--line);
+  background:conic-gradient(from 0deg,#0000 0 50deg,#ffffff30 70deg,#0000 100deg 230deg,#ffffff22 250deg,#0000 280deg),radial-gradient(circle,var(--ac) 0 10%,#0b0b0e 11% 34%,#23232b 35% 37%,#0b0b0e 38% 58%,#23232b 59% 61%,#0b0b0e 62% 100%)}
+#bar #music:hover{box-shadow:inset 0 0 0 1px var(--ac)}
+#music.on{animation:spin 2.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Bouclier */
+#bar #shield{width:auto;min-width:32px;padding:0 8px;font-size:14px}
+#sc{margin-left:4px;color:var(--ac);font-size:11px}
+#shield.on{color:var(--ac)}
+
+/* Onglets : animation à la création seulement, épinglés, groupes, son */
+.tab{animation:none}
+.tab.new{animation:in .2s cubic-bezier(.2,.8,.2,1)}
+.tab.pin{flex:0 0 40px;width:40px;padding:0;justify-content:center}
+.tab.pin .t,.tab.pin .x,.tab.pin .au{display:none}
+.tab[data-g]{box-shadow:inset 0 3px 0 var(--c)}
+[data-pos=bottom] .tab[data-g]{box-shadow:inset 0 -3px 0 var(--c)}
+[data-pos=left] .tab[data-g]{box-shadow:inset 3px 0 0 var(--c)}
+[data-pos=right] .tab[data-g]{box-shadow:inset -3px 0 0 var(--c)}
+.grp{flex:none;align-self:center;max-width:110px;padding:3px 9px;overflow:hidden;border-radius:10px;background:var(--c);color:#111;font-size:11px;font-weight:600;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;-webkit-app-region:no-drag}
+[data-pos=left] .grp,[data-pos=right] .grp{align-self:flex-start;margin-top:4px}
+.tab .au{font-size:12px;font-style:normal;cursor:pointer}
+.tab .au[hidden]{display:none}
+[data-pos=left] .tab.pin,[data-pos=right] .tab.pin{width:auto;flex:none}
+
+/* Barre latérale (messageries et outils) */
+:root{--bot:0px}
+[data-pos=bottom]{--bot:40px}
+[data-rail=left]{--sl:48px}
+[data-rail=right]{--sr:48px}
+#rail{position:absolute;top:var(--top);bottom:var(--bot);width:48px;display:none;flex-direction:column;align-items:center;gap:4px;padding:8px 0;overflow-y:auto;background:var(--bg2);-webkit-app-region:no-drag}
+[data-rail=left] #rail{display:flex;left:0}
+[data-rail=right] #rail{display:flex;right:0}
+#rail button{width:36px;height:36px;flex:none;padding:0;border:0;border-radius:10px;background:none;color:var(--tx);font-size:17px;transition:background-color .15s}
+#rail button:hover,#rail button.on{background:var(--bg3)}
+#rail button.on{box-shadow:inset 0 0 0 1px var(--ac)}
+#bar #space{width:auto;min-width:32px;font-size:16px}
+
+/* Badge Gaming, bandeau des sources de la barre latérale, icônes des services */
+:root{--extra:0px}
+#hud{flex:none;padding:5px 10px;border-radius:12px;background:var(--bg3);color:var(--tx);font-size:12px;white-space:nowrap;-webkit-app-region:no-drag}
+#hud[hidden],#sidehead[hidden]{display:none}
+#sidehead{position:absolute;top:calc(var(--top) + var(--extra));box-sizing:border-box;width:var(--sidew,440px);overflow:hidden;height:36px;display:flex;align-items:center;gap:4px;padding:0 6px;background:var(--bg2);border-bottom:1px solid var(--line);-webkit-app-region:no-drag}
+[data-rail=left] #sidehead{left:48px}
+[data-rail=right] #sidehead{right:48px}
+#sidehead button{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid transparent;border-radius:10px;background:none;color:var(--dim);font:inherit;font-size:12px;cursor:pointer}
+#sidehead button:hover,#sidehead button.on{background:var(--bg3);color:var(--tx)}
+#sidehead button.on{border-color:var(--ac)}
+.gl{display:inline-grid;place-items:center;width:22px;height:22px;overflow:hidden;border-radius:50%;color:#fff;font-size:12px;font-weight:700}
+.gl.ok{background:none}
+.gl img{width:100%;height:100%;object-fit:contain}
+.gl.plain{width:auto;background:none;color:inherit;font-size:17px}
+#rail .gl{width:26px;height:26px;font-size:14px}
+#rail hr{width:26px;margin:4px 0;border:0;border-top:1px solid var(--line)}
+
+#sidehead button{white-space:nowrap;padding:4px 8px;gap:5px}
+.tab.pin::before{content:attr(data-l);color:var(--dim);font-size:14px}
+.tab.pin:has(img:not([hidden]))::before{content:none}
+
+/* Poignée du panneau latéral (6 px entre le panneau et la page) */
+#grip{position:absolute;top:calc(var(--top) + var(--extra));bottom:var(--bot);width:6px;cursor:ew-resize;background:var(--bg2);-webkit-app-region:no-drag;transition:background-color .15s}
+#grip[hidden]{display:none}
+#grip::after{content:"";position:absolute;left:2px;top:50%;width:2px;height:36px;margin-top:-18px;border-radius:1px;background:var(--line)}
+#grip:hover,#grip.on{background:color-mix(in srgb,var(--ac) 35%,var(--bg2))}
+[data-rail=left] #grip{left:calc(48px + var(--sidew,440px))}
+[data-rail=right] #grip{right:calc(48px + var(--sidew,440px))}
+
+/* Bouton VPN : bouclier + pays ; lumineux quand la protection est active */
+#bar #vpn{display:flex;align-items:center;gap:4px;width:auto;padding:0 8px 0 6px}
+#vpn #vcc{font-size:10.5px;font-weight:600;letter-spacing:.04em}
+#vpn .ck{opacity:0;transition:opacity .2s}
+#vpn.on{color:#2ee59d;background:color-mix(in srgb,#2ee59d 14%,transparent)}
+#vpn.on .ck{opacity:1}
+#vpn.on svg{filter:drop-shadow(0 0 4px #2ee59d88)}
+[data-theme=tron] #vpn.on{color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,transparent)}
+[data-theme=tron] #vpn.on svg{filter:drop-shadow(0 0 5px var(--ac))}
+
+/* TRON : la barre de chargement est une moto de lumière */
+[data-theme=tron] #load{height:3px}
+[data-theme=tron] #load::before{background:linear-gradient(90deg,transparent,#00e5ff 75%,#fff);box-shadow:0 0 10px #00e5ff,0 0 22px #00b8ff}
+[data-theme=tron] #menu:hover,[data-theme=tron] #bar button:hover{color:var(--ac);text-shadow:0 0 8px var(--ac)}

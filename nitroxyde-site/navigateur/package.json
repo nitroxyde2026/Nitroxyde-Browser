@@ -1,0 +1,90 @@
+{
+  "name": "nitroxyde-navigation",
+  "version": "0.10.2",
+  "description": "Nitroxyde Navigation : navigateur basé sur Chromium, rapide et fluide (projet éducatif)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "reset": "electron . --reset",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "fr.nitroxyde.navigation",
+    "productName": "Nitroxyde Navigation",
+    "files": [
+      "main.js",
+      "preload.js",
+      "store.js",
+      "features.js",
+      "extras.js",
+      "adblock.js",
+      "ai.js",
+      "dl.js",
+      "sidebar.js",
+      "workspace.js",
+      "tools.js",
+      "memory.js",
+      "popup.js",
+      "passwords.js",
+      "vpn.js",
+      "src/**",
+      "music/**",
+      "wallpapers/**",
+      "widgets/**",
+      "themes/**"
+    ],
+    "asarUnpack": [
+      "music/**",
+      "wallpapers/**",
+      "widgets/**",
+      "themes/**"
+    ],
+    "directories": {
+      "buildResources": "src",
+      "output": "dist"
+    },
+    "copyright": "Nitroxyde",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "src/icon.png",
+      "artifactName": "Nitroxyde-Navigation-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Nitroxyde Navigation"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity",
+      "artifactName": "Nitroxyde-Navigation-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Network",
+      "artifactName": "Nitroxyde-Navigation-${version}.${ext}"
+    }
+  },
+  "devDependencies": {
+    "electron": "latest",
+    "electron-builder": "latest"
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "2.12.5"
+  },
+  "author": "Nitroxyde",
+  "homepage": "https://nitroxyde.fr"
+}

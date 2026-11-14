@@ -1,0 +1,4 @@
+Dépose ici des thèmes .json (couleurs bg, bg2, bg3, tx, dim, ac, gl, line + name, light, neon).
+Ils apparaissent dans Personnaliser > Mes thèmes. Paramètres > Apparence permet d'importer et d'exporter un modèle.
+
+Le sous-dossier tron/ contient la musique du thème spécial TRON (jouée seulement quand ce thème est actif).

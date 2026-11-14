@@ -1,0 +1,3 @@
+Un widget est un simple fichier .html. Dépose-le ici (inclus dans l'exe) ou importe-le depuis
+Personnaliser > Widgets. Il s'affiche sur le nouvel onglet dans un cadre isolé (scripts autorisés, pas d'accès au navigateur).
+Taille facultative : <meta name="widget:width" content="220"> et <meta name="widget:height" content="140">.

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr"><meta charset="utf-8"><title>Aperçu IA</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--tx);font:14px/1.5 "Segoe UI Variable",system-ui,sans-serif}
+#box{box-sizing:border-box;display:flex;flex-direction:column;height:100%;padding:8px 18px 10px;border-bottom:1px solid var(--line);background:linear-gradient(var(--bg2),var(--bg))}
+header{display:flex;align-items:center;gap:8px;min-height:32px;color:var(--dim);font-size:12px}
+header b{color:var(--tx);font-size:13px}
+#who{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button{padding:3px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg3);color:var(--tx);font:inherit;font-size:12px;cursor:pointer;transition:border-color .15s}
+button:hover{border-color:var(--ac)}
+#body{flex:1;overflow-y:auto;margin-top:2px}
+#body p,#body h4{margin:0 0 6px}
+#body ul{margin:0 0 6px;padding-left:20px}
+#body pre{margin:0 0 6px;padding:8px;overflow:auto;border-radius:8px;background:var(--bg2);font-size:12px}
+#body code{padding:0 4px;border-radius:4px;background:var(--bg2)}
+#body.err{color:#ff8a8a}
+.mini #body{display:none}
+</style>
+<div id="box"><header><b>✦ Aperçu IA</b><span id="who"></span><button id="up" title="Réduire">▾</button><button id="pn" title="Continuer dans le panneau">⤢ Discuter</button><button id="x" title="Fermer">✕</button></header><div id="body"></div></div>
+<script src="skin.js"></script>
+<script src="md.js"></script>
+<script src="aibar.js"></script>

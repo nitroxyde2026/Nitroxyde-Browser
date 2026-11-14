@@ -1,0 +1,3 @@
+Musiques de base livrées avec le navigateur (Seismic Souls - NUYA joue par défaut au lancement).
+Ajoute ici d'autres pistes (mp3, ogg, wav, m4a, flac, opus, aac) pour les inclure dans l'exe.
+Les musiques ajoutées par l'utilisateur vont dans son dossier de données, pas ici.

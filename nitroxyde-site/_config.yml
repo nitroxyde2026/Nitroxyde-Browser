@@ -1,0 +1,6 @@
+# Fichiers du dépôt qui ne doivent pas être publiés sur nitroxyde.fr
+# (code source du navigateur et outils : ils servent seulement à construire l installateur)
+exclude:
+  - navigateur
+  - outils
+  - README-HEBERGEMENT.txt
