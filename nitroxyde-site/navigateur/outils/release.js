@@ -30,8 +30,9 @@ console.log(`\nversion.json → ${version} · ${(buf.length / 1048576).toFixed(1
 
 // 3. Enregistrement de version.json dans le dépôt (GitHub Pages republie le site tout seul)
 process.chdir(site);
-sh('git config user.name "Nitroxyde Publication"');
-sh('git config user.email "actions@users.noreply.github.com"');
+const who = process.env.GITHUB_ACTOR || 'nitroxyde', id = process.env.GITHUB_ACTOR_ID;
+sh(`git config user.name "${who}"`);
+sh(`git config user.email "${id ? id + '+' : ''}${who}@users.noreply.github.com"`);
 sh('git add version.json');
 if (ok('git diff --cached --quiet')) { console.log('version.json déjà à jour.'); process.exit(0); }
 sh(`git commit -m "Navigateur ${version} disponible au téléchargement"`);
