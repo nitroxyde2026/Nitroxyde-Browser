@@ -226,7 +226,7 @@ const views = {
         lab('Nouveau profil', pn, btn('Ajouter', async () => { await nxp('profileAdd', pn.value); route(); })),
         note('Chaque profil a ses propres cookies, historique, favoris et réglages. Changer de profil redémarre le navigateur.')),
       sec('Mises à jour et à propos', lab('Vérifier les mises à jour', btn('Vérifier', () => nxp('checkUpdate'))),
-        note(`Nitroxyde Navigation ${about.version} — Chromium ${about.chrome}, Electron ${about.electron}`),
+        note(`Nitroxyde Browser ${about.version} — Chromium ${about.chrome}, Electron ${about.electron}`),
         lab('Réinitialiser tous les paramètres', btn('Réinitialiser', async () => { await nxp('reset'); route(); })),
         lab('Remise à zéro complète (comme une nouvelle installation)', btn('Tout effacer…', () => nxp('factoryReset'))),
         note('Efface réglages, historique, favoris, cookies, sessions, musiques et fonds ajoutés, puis redémarre sur l’écran de bienvenue. Pratique pour tester. Depuis le code source : npm run reset.'))];

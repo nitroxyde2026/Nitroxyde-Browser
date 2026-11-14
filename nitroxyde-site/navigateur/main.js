@@ -343,7 +343,7 @@ const ACTIONS = {
   passwords: ['Mots de passe', 'Ctrl+Shift+P', () => page('passwords')],
   menu: ['Menu principal', 'Alt+F', () => popup.toggle('menu')],
   vpn: ['Panneau VPN', 'Alt+V', () => popup.toggle('vpn')],
-  help: ['Aide', 'F1', () => createTab('https://nitroxyde.fr/aide.html')],
+  help: ['Aide', 'F1', () => createTab('https://nitroxyde.fr/aide')],
   quit: ['Quitter', 'Ctrl+Shift+Q', () => app.quit()],
 };
 const combo = i => [i.control || i.meta ? 'Ctrl' : '', i.alt ? 'Alt' : '', i.shift ? 'Shift' : '', i.key.length === 1 ? i.key.toUpperCase() : i.key].filter(Boolean).join('+');
@@ -509,7 +509,7 @@ ipcMain.handle('nav', (e, cmd, arg) => {
 app.whenReady().then(() => {
   for (const p of [PART, PRIV]) guard(session.fromPartition(p));
   // Identité « navigateur Chrome » : sans le mot Electron, Google, Discord ou WhatsApp acceptent la connexion plus souvent
-  const UA = session.defaultSession.getUserAgent().replace(/\s*Electron\/\S+/, '').replace(/\s*nitroxyde-navigation\/\S+/i, '');
+  const UA = session.defaultSession.getUserAgent().replace(/\s*Electron\/\S+/, '').replace(/\s*nitroxyde[\s-]?(browser|navigation)\/\S+/i, '');
   for (const p of [PART, PRIV, SIDE]) { const ses = session.fromPartition(p); ses.setUserAgent(UA); ses.setSpellCheckerEnabled(false); }   // le correcteur orthographique coûte de la mémoire
   extras.cookieGuard(session.fromPartition(PART), false);
   extras.cookieGuard(session.fromPartition(PRIV), true);

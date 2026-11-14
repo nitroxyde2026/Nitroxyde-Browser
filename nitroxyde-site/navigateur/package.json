@@ -1,7 +1,7 @@
 {
-  "name": "nitroxyde-navigation",
-  "version": "0.10.2",
-  "description": "Nitroxyde Navigation : navigateur basé sur Chromium, rapide et fluide (projet éducatif)",
+  "name": "nitroxyde-browser",
+  "version": "0.10.3",
+  "description": "Nitroxyde Browser : navigateur basé sur Chromium, rapide et fluide (projet éducatif)",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -10,7 +10,7 @@
   },
   "build": {
     "appId": "fr.nitroxyde.navigation",
-    "productName": "Nitroxyde Navigation",
+    "productName": "Nitroxyde Browser",
     "files": [
       "main.js",
       "preload.js",
@@ -54,7 +54,7 @@
         }
       ],
       "icon": "src/icon.png",
-      "artifactName": "Nitroxyde-Navigation-Setup-${version}.${ext}"
+      "artifactName": "Nitroxyde-Browser-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -62,12 +62,12 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Nitroxyde Navigation"
+      "shortcutName": "Nitroxyde Browser"
     },
     "mac": {
       "target": "dmg",
       "category": "public.app-category.productivity",
-      "artifactName": "Nitroxyde-Navigation-${version}.${ext}"
+      "artifactName": "Nitroxyde-Browser-${version}.${ext}"
     },
     "linux": {
       "target": [
@@ -75,7 +75,7 @@
         "deb"
       ],
       "category": "Network",
-      "artifactName": "Nitroxyde-Navigation-${version}.${ext}"
+      "artifactName": "Nitroxyde-Browser-${version}.${ext}"
     }
   },
   "devDependencies": {

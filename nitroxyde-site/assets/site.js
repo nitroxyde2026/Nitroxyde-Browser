@@ -20,7 +20,7 @@
   document.querySelector(`.card[data-os="${os}"]`)?.classList.add('me');
 
   // Boutons « copier » des commandes
-  const names = { win: 'Nitroxyde-Navigation-Setup-0.8.0.exe', mac: 'Nitroxyde-Navigation-0.8.0.dmg', linux: 'Nitroxyde-Navigation-0.8.0.AppImage' };
+  const names = { win: 'Nitroxyde-Browser-Setup-0.10.3.exe', mac: 'Nitroxyde-Browser-0.10.3.dmg', linux: 'Nitroxyde-Browser-0.10.3.AppImage' };
   const fill = () => document.querySelectorAll('[data-tpl]').forEach(e => {
     e.textContent = e.dataset.tpl.replace(/\{(win|mac|linux)\}/g, (_, k) => names[k]);
   });
@@ -49,8 +49,8 @@
     const dl = document.getElementById('dl'), meta = document.getElementById('meta');
     if (dl) {
       const target = j.files?.[os] ? os : j.files?.win ? 'win' : null;
-      if (mobile) { dl.textContent = 'Voir le téléchargement'; dl.href = 'telecharger.html'; if (meta) meta.textContent = `Gratuit · version ${j.version} · pour ordinateur, l’application mobile viendra plus tard`; }
-      else if (target) { dl.textContent = `Télécharger pour ${NAMES[target]}`; dl.href = 'telecharger.html'; if (meta) meta.textContent = `Gratuit · version ${j.version}${target !== os ? ` · ${NAMES[os]} bientôt disponible` : ''}`; }
+      if (mobile) { dl.textContent = 'Voir le téléchargement'; dl.href = '/telecharger'; if (meta) meta.textContent = `Gratuit · version ${j.version} · pour ordinateur, l’application mobile viendra plus tard`; }
+      else if (target) { dl.textContent = `Télécharger pour ${NAMES[target]}`; dl.href = '/telecharger'; if (meta) meta.textContent = `Gratuit · version ${j.version}${target !== os ? ` · ${NAMES[os]} bientôt disponible` : ''}`; }
     }
   }
   fill();

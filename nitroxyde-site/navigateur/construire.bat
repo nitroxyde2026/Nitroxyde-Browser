@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Nitroxyde Navigation - construire l'installateur sur ce PC
+title Nitroxyde Browser - construire l'installateur sur ce PC
 cd /d "%~dp0"
 REM Facultatif : la publication sur nitroxyde.fr se fait maintenant toute seule sur GitHub (onglet Actions).
 REM Ce fichier sert seulement à fabriquer l'installateur sur ton PC pour le tester.

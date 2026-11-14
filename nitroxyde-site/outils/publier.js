@@ -12,11 +12,11 @@ if (!src || !fs.existsSync(src)) { console.log('Usage : node outils/publier.js <
 const root = path.join(__dirname, '..'), out = path.join(root, 'telecharger');
 fs.mkdirSync(out, { recursive: true });
 const KINDS = {
-  win: /^Nitroxyde-Navigation-Setup-[\d.]+\.exe$/,
-  mac: /^Nitroxyde-Navigation-[\d.]+\.dmg$/,
-  linux: /^Nitroxyde-Navigation-[\d.]+\.AppImage$/,
+  win: /^Nitroxyde-Browser-Setup-[\d.]+\.exe$/,
+  mac: /^Nitroxyde-Browser-[\d.]+\.dmg$/,
+  linux: /^Nitroxyde-Browser-[\d.]+\.AppImage$/,
 };
-const info = { version: '', url: 'https://nitroxyde.fr/telecharger.html', files: {}, sha256: {}, size: {} };
+const info = { version: '', url: 'https://nitroxyde.fr/telecharger', files: {}, sha256: {}, size: {} };
 
 for (const f of fs.readdirSync(src)) {
   for (const [os, re] of Object.entries(KINDS)) {

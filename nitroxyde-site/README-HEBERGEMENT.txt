@@ -12,12 +12,9 @@ Il n'y a rien à programmer côté serveur.
    le navigateur Nitroxyde refuse une adresse de mise à jour qui n'est pas en https.
 
 2) PUBLIER UNE VERSION DU NAVIGATEUR
-   a. Dans le projet du navigateur : npm run dist  (les installateurs apparaissent dans le dossier dist/).
-   b. Dans le dossier du site : node outils/publier.js ..\nitroxyde-navigation\dist
-      (adapte le chemin). Le script copie les installateurs dans telecharger/, calcule les empreintes SHA-256
-      et met à jour version.json : la page de téléchargement affiche alors la bonne version et les empreintes.
-   c. Envoie tout le dossier du site sur l'hébergeur.
-   Les boutons macOS et Linux restent « Bientôt disponible » tant qu'aucun fichier correspondant n'a été publié.
+   Automatique sur GitHub : change "version" dans navigateur/package.json (ou onglet Actions › Publier le navigateur
+   › Run workflow). GitHub construit l'installateur, le publie dans une Release et met à jour version.json ;
+   Vercel republie le site. Le dépôt doit rester public pour que les visiteurs puissent télécharger le fichier.
 
 3) MISES À JOUR DANS LE NAVIGATEUR
    Dix secondes après le démarrage, Nitroxyde lit https://nitroxyde.fr/version.json. Si "version" est plus récente que
