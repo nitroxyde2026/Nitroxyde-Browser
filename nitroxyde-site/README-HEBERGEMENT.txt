@@ -21,10 +21,8 @@ Il n'y a rien à programmer côté serveur.
    celle installée, il affiche une notification qui ouvre la page de téléchargement. Ce n'est pas une mise à jour
    automatique : l'utilisateur retélécharge l'installateur.
 
-4) À COMPLÉTER AVANT LA MISE EN LIGNE
-   - mentions-legales.html : éditeur, contact et hébergeur (zones surlignées en jaune).
-   - confidentialite.html : date de dernière mise à jour.
-   - Une adresse de contact, pour que les visiteurs bloqués puissent t'écrire.
+4) INFORMATIONS LÉGALES
+   Complétées : éditeur Aaron Denoeux, contact nitroxyde2026@mail.com, hébergeurs Vercel (site), GitHub (installateurs), OVH (domaine et DNS).
 
 5) FAUX POSITIFS ANTIVIRUS
    Un programme non signé peut être signalé à tort. Tu peux envoyer le fichier à Microsoft pour analyse
