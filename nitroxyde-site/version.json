@@ -1,9 +1,13 @@
 {
-  "version": "0.8.0",
+  "version": "0.10.2",
   "url": "https://nitroxyde.fr/telecharger.html",
   "files": {
-    "win": "telecharger/Nitroxyde-Navigation-Setup-0.8.0.exe"
+    "win": "https://github.com/nitroxyde2026/Nitroxyde-Browser/releases/download/v0.10.2/Nitroxyde-Navigation-Setup-0.10.2.exe"
   },
-  "sha256": {},
-  "size": {}
+  "sha256": {
+    "win": "4e98680abb17b7d19f2d2f7d3b29ba5e0d1b0a4fa07b19fec273b99b4312f099"
+  },
+  "size": {
+    "win": 134745813
+  }
 }
