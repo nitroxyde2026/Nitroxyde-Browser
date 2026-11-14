@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://nitroxyde.fr/sitemap.xml

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confidentialité — Nitroxyde Navigation</title>
+<meta name="description" content="Ce que Nitroxyde Navigation fait de tes données : aucun compte, aucune télémétrie, et la liste des connexions établies par chaque fonction.">
+<link rel="canonical" href="https://nitroxyde.fr/confidentialite.html">
+<meta property="og:title" content="Confidentialité — Nitroxyde Navigation">
+<meta property="og:description" content="Ce que Nitroxyde Navigation fait de tes données : aucun compte, aucune télémétrie, et la liste des connexions établies par chaque fonction.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nitroxyde.fr/confidentialite.html">
+<meta property="og:image" content="https://nitroxyde.fr/icon.png">
+<meta name="theme-color" content="#050506">
+<link rel="icon" href="icon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<div id="sky" aria-hidden="true"></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="Nitroxyde Navigation, accueil"><img src="logo.png" alt="NTRX"><span>Nitroxyde</span></a>
+    <button class="burger" aria-label="Menu" aria-expanded="false">Menu</button>
+    <nav class="main" aria-label="Navigation principale"><a href="index.html">Accueil</a><a href="fonctionnalites.html">Fonctionnalités</a><a href="telecharger.html">Télécharger</a><a href="aide.html">Aide</a><a href="premiers-pas.html">Premiers pas</a><a class="btn small main" href="telecharger.html">Télécharger</a></nav>
+  </div>
+</header>
+<main id="contenu">
+
+<div class="narrow prose">
+  <div class="phead"><span class="eyebrow">Confidentialité</span><h1>Tes données restent <em>chez toi.</em></h1><p>Cette page explique, sans jargon, ce que Nitroxyde fait de tes données et quand il contacte Internet.</p></div>
+
+  <h2>Ce que Nitroxyde ne fait pas</h2>
+  <ul>
+    <li>Aucun compte à créer.</li>
+    <li>Aucune télémétrie, aucune statistique d’usage envoyée à Nitroxyde.</li>
+    <li>Aucune publicité, aucun traceur dans le navigateur.</li>
+  </ul>
+
+  <h2>Ce qui reste sur ton ordinateur</h2>
+  <p>Historique, favoris, raccourcis, réglages, notes, tâches, sessions et fonds ajoutés sont enregistrés dans le dossier de ton profil (<code class="k">%APPDATA%\nitroxyde-navigation</code> sous Windows). Les clés d’API sont chiffrées avec le coffre du système quand il est disponible. Rien de tout cela n’est envoyé à Nitroxyde.</p>
+
+  <h2>Les connexions que le navigateur établit</h2>
+  <p>Certaines fonctions ont besoin d’Internet. Elles ne contactent un service que si tu les utilises :</p>
+  <ul>
+    <li><b>Bloqueur de pubs</b> : téléchargement des listes de filtres (Ghostery), une fois par semaine.</li>
+    <li><b>Actualités</b> : lecture du flux de la source choisie (France Info, Le Monde, Google Actualités ou BBC) à l’ouverture d’un nouvel onglet. Les images sont chargées depuis le site de la source.</li>
+    <li><b>Météo</b> : la ville saisie est envoyée à Open-Meteo pour obtenir les prévisions.</li>
+    <li><b>Assistant IA</b> : uniquement si tu enregistres une clé. Ta question, et le texte de la page si tu le demandes, sont envoyés au fournisseur choisi (Groq, OpenAI, Google ou Anthropic), soumis à sa propre politique de confidentialité.</li>
+    <li><b>Traduction et devises</b> : MyMemory (si aucune clé d’IA n’est enregistrée) et Frankfurter, depuis la barre latérale.</li>
+    <li><b>Icônes</b> : les logos des services de la barre latérale et des sites visités sont récupérés auprès de ces sites.</li>
+    <li><b>Mises à jour</b> : une requête vers <code class="k">nitroxyde.fr/version.json</code> pour savoir si une nouvelle version existe. Ton adresse IP est visible de notre hébergeur, comme pour toute visite d’un site.</li>
+    <li><b>Applications de la barre latérale</b> (Discord, WhatsApp, Spotify…) : ce sont les sites de ces services, qui appliquent leurs propres règles.</li>
+  </ul>
+
+  <h2>Chromium et les sites que tu visites</h2>
+  <p>Nitroxyde repose sur Chromium. Les sites que tu visites reçoivent les informations habituelles d’un navigateur (adresse IP, version). Les options de protection (HTTPS automatique, cookies tiers, signal « ne pas me suivre », DNS sur HTTPS) sont dans les paramètres.</p>
+
+  <h2>Ce site web</h2>
+  <p>nitroxyde.fr n’utilise ni cookie, ni outil de mesure d’audience, ni police ou script externe.</p>
+
+  <h2>Tes droits</h2>
+  <p>Tes données sont sur ton appareil : tu peux les consulter, les modifier ou les effacer à tout moment (Paramètres, « Effacer l’historique, les cookies et le cache », ou suppression du dossier du profil). Pour toute question sur ce site, consulte les <a href="mentions-legales.html">mentions légales</a>.</p>
+  <p style="margin-top:30px"><span class="todo">Dernière mise à jour : à renseigner lors de la publication.</span></p>
+</div>
+
+</main>
+<footer class="bottom">
+  <div class="wrap">
+    <div class="cols">
+      <div><a class="brand" href="index.html"><img src="logo.png" alt="NTRX"><span>Nitroxyde</span></a><p style="margin-top:12px;max-width:30ch">Un navigateur basé sur Chromium, pensé pour la vitesse, la mémoire et la vie privée.</p></div>
+      <div><h4>Navigateur</h4><a href="fonctionnalites.html">Fonctionnalités</a><a href="telecharger.html">Télécharger</a><a href="premiers-pas.html">Premiers pas</a></div>
+      <div><h4>Aide</h4><a href="aide.html#smartscreen">Windows bloque l’installation</a><a href="aide.html#verifier">Vérifier le fichier</a><a href="aide.html#desinstaller">Désinstaller</a><a href="aide.html#faq">Questions fréquentes</a></div>
+      <div><h4>Légal</h4><a href="confidentialite.html">Confidentialité</a><a href="mentions-legales.html">Mentions légales</a></div>
+    </div>
+    <div class="legal"><span>© Nitroxyde · nitroxyde.fr</span><span>Version de test <span data-version>0.8.0</span> · basé sur Chromium</span></div>
+  </div>
+</footer>
+<script src="assets/site.js" defer></script>
+</body>
+</html>
