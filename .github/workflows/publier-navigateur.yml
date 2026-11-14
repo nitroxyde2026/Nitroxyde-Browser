@@ -1,0 +1,34 @@
+name: Publier le navigateur
+
+on:
+  workflow_dispatch:
+  push:
+    paths: ['nitroxyde-site/navigateur/package.json']
+
+permissions:
+  contents: write
+
+concurrency: publier-navigateur
+
+jobs:
+  publier:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Construire l'installateur Windows
+        working-directory: nitroxyde-site/navigateur
+        run: |
+          npm install --no-audit --no-fund --legacy-peer-deps
+          npx electron-builder --win --x64 --publish never
+
+      - name: Publier la Release et mettre à jour version.json
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node nitroxyde-site/navigateur/outils/release.js
