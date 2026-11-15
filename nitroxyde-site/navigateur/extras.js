@@ -623,22 +623,53 @@ async function translate({ text, from, to }) {
   } catch { return 'Traduction indisponible hors ligne.'; }
 }
 
-// ---- Mises à jour : un simple fichier version.json sur nitroxyde.fr ----
+// ---- Mises à jour : version.json sur nitroxyde.fr (écrit par la publication GitHub) ----
+// Au démarrage puis toutes les 6 h, le navigateur compare sa version à celle du site. S'il y a plus récent,
+// « Mettre à jour » télécharge l'installateur depuis GitHub Releases, vérifie son empreinte SHA-256,
+// l'installe en silencieux par-dessus la version actuelle (réglages et données gardés) puis relance Nitroxyde.
+const cmpV = (a, b) => { const x = String(a).split('.'), y = String(b).split('.'); for (let i = 0; i < 3; i++) { const d = (+x[i] || 0) - (+y[i] || 0); if (d) return d; } return 0; };
+let updating = false;
 async function checkUpdate(manual) {
   const s = store.get('settings');
   try {
-    const j = await (await net.fetch(s.updateUrl, { signal: AbortSignal.timeout(6000) })).json();
-    const cmp = (a, b) => { const x = String(a).split('.'), y = String(b).split('.'); for (let i = 0; i < 3; i++) { const d = (+x[i] || 0) - (+y[i] || 0); if (d) return d; } return 0; };
-    if (cmp(j.version, app.getVersion()) > 0 && /^https:\/\//.test(String(j.url))) {
-      if (!manual && s.updateSeen === j.version) return;
-      s.updateSeen = j.version; store.save('settings');
-      const v = await api.toast({ icon: '⬆', title: `Nitroxyde ${j.version} disponible`, text: 'Une nouvelle version est prête à être téléchargée.', ms: 12000, soft: true,
-        actions: [{ label: 'Télécharger', value: true }, { label: 'Plus tard', value: false }] });
-      if (v === true) shell.openExternal(j.url);
+    const j = await (await net.fetch(s.updateUrl, { signal: AbortSignal.timeout(6000), cache: 'no-store' })).json();
+    if (cmpV(j.version, app.getVersion()) > 0) {
+      if ((!manual && s.updateSeen === j.version) || updating) return;
+      const file = j.files?.win ? new URL(j.files.win, s.updateUrl).href : '';
+      const auto = process.platform === 'win32' && app.isPackaged && /^https:\/\//.test(file) && /^[0-9a-f]{64}$/.test(j.sha256?.win || '');
+      const v = await api.toast({ icon: '⬆', title: `Nitroxyde ${j.version} disponible`,
+        text: auto ? 'Installation en un clic : tes réglages, favoris et onglets sont gardés.' : 'Une nouvelle version est prête à être téléchargée.', ms: 30000,
+        actions: [{ label: auto ? 'Mettre à jour' : 'Télécharger', value: true }, { label: 'Plus tard', value: false }] });
+      if (v === false) { s.updateSeen = j.version; store.save('settings'); }   // « Plus tard » : on ne redemande qu'à la version suivante
+      if (v !== true) return;
+      if (auto) installUpdate(j, file);
+      else if (/^https:\/\//.test(String(j.url))) api.createTab(j.url);
     } else if (manual) api.toast({ icon: '✔', title: 'À jour', text: `Version ${app.getVersion()}`, ms: 3500 });
   } catch { if (manual) api.toast({ icon: '⚠', title: 'Vérification impossible', text: 'Le serveur de mises à jour ne répond pas.', ms: 4500 }); }
 }
-exports.updateStart = () => setTimeout(() => checkUpdate(false), 10000);
+async function installUpdate(j, file) {
+  updating = true;
+  const dest = path.join(os.tmpdir(), `Nitroxyde-Browser-Setup-${String(j.version).replace(/[^\d.]/g, '')}.exe`);
+  api.toast({ icon: '⬇', title: `Téléchargement de Nitroxyde ${j.version}…`, text: 'Tu peux continuer à naviguer.', ms: 8000 });
+  try {
+    const res = await net.fetch(file, { signal: AbortSignal.timeout(15 * 60000) });
+    if (!res.ok) throw new Error('téléchargement refusé (' + res.status + ')');
+    const buf = Buffer.from(await res.arrayBuffer());
+    const sha = require('crypto').createHash('sha256').update(buf).digest('hex');
+    if (sha !== j.sha256.win) throw new Error('fichier altéré ou incomplet (empreinte différente)');   // jamais installé s'il ne correspond pas
+    await fs.promises.writeFile(dest, buf);
+    const v = await api.toast({ icon: '⬆', title: 'Mise à jour prête', text: 'Nitroxyde va se fermer quelques secondes pour l’installer, puis se rouvrir avec tes onglets.', ms: 60000,
+      actions: [{ label: 'Redémarrer maintenant', value: true }, { label: 'À la fermeture', value: false }] });
+    const run = () => require('child_process').spawn(dest, ['/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref();   // installateur silencieux, relance à la fin
+    if (v === true) { run(); app.quit(); }
+    else app.once('will-quit', run);
+  } catch (err) {
+    updating = false;
+    const v = await api.toast({ icon: '⚠', title: 'Mise à jour impossible', text: err.message, ms: 12000, actions: [{ label: 'Télécharger depuis le site', value: true }] });
+    if (v === true && /^https:\/\//.test(String(j.url))) api.createTab(j.url);
+  }
+}
+exports.updateStart = () => { setTimeout(() => checkUpdate(false), 10000); setInterval(() => checkUpdate(false), 6 * 3600000); };
 
 // ---- Commandes des pages internes (version 0.6) ----
 async function handle2(e, cmd, arg, s) {
