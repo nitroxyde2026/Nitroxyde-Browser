@@ -1,13 +1,13 @@
 {
-  "version": "0.10.3",
+  "version": "0.11.0",
   "url": "https://nitroxyde.fr/telecharger",
   "files": {
-    "win": "https://github.com/nitroxyde2026/Nitroxyde-Browser/releases/download/v0.10.3/Nitroxyde-Browser-Setup-0.10.3.exe"
+    "win": "https://github.com/nitroxyde2026/Nitroxyde-Browser/releases/download/v0.11.0/Nitroxyde-Browser-Setup-0.11.0.exe"
   },
   "sha256": {
-    "win": "9dac9da81a7be078f3926dd67ed4a879e4b9d9f05f1047e49f28b4dab5dd5162"
+    "win": "bc9946b251beeafd454938da3303f7857728122348bc4f1a3c7e4cf76241bd91"
   },
   "size": {
-    "win": 135700034
+    "win": 135704470
   }
 }
