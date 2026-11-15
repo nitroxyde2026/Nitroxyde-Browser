@@ -14,6 +14,7 @@ if (location.protocol === 'file:') {
       onExtra: cb => ipcRenderer.on('extra', (_, n) => cb(n)),
       onSideW: cb => ipcRenderer.on('sidew', (_, n) => cb(n)),
       onFocusUrl: cb => ipcRenderer.on('focus-url', () => cb()),
+      onUrlBlur: cb => ipcRenderer.on('url-blur', () => cb()),
       onFind: cb => ipcRenderer.on('find', (_, m) => cb(m)),
     });
   } else if (page('pages.html') || page('newtab.html') || page('welcome.html') || page('side.html')) {

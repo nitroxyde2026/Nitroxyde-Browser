@@ -207,13 +207,52 @@ addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 $('wadd').onclick = async () => { await nxp('widgetAdd'); showWidgets(true); };
 
 // ---- Recherche au centre : moteur au choix, suggestions favoris/historique ----
-for (const [v, t] of [['', 'Par défaut'], ['duckduckgo', 'DuckDuckGo'], ['google', 'Google'], ['brave', 'Brave'], ['ecosia', 'Ecosia'], ['startpage', 'Startpage']]) $('eng').append(h('option', { value: v, textContent: t }));
-const s = $('s');
-s.onkeydown = e => { if (e.key === 'Enter' && s.value.trim()) nxp('go', { text: s.value, engine: $('eng').value || undefined }); };
-s.oninput = async () => {
-  const list = await nxp('suggest', s.value);
-  $('sg').replaceChildren(...list.map(u => h('option', { value: u })));
+// Le moteur choisi ici est celui de tout le navigateur (barre du haut comprise)
+for (const [v, t] of [['google', 'Google'], ['duckduckgo', 'DuckDuckGo'], ['bing', 'Bing'], ['brave', 'Brave'], ['ecosia', 'Ecosia'], ['qwant', 'Qwant'], ['startpage', 'Startpage']]) $('eng').append(h('option', { value: v, textContent: t }));
+$('eng').onchange = () => { cfg.engine = $('eng').value; set('engine', $('eng').value); s.focus(); if (s.value.trim()) refresh(); };
+const s = $('s'), sgl = $('sgl');
+let items = [], sel = -1, typed = '', sugT = 0, sugN = 0;
+const SICO = {
+  search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>', history: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  bookmark: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  url: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.7 5.4 3.7 8.5s-1.2 5.9-3.7 8.5c-2.5-2.6-3.7-5.4-3.7-8.5s1.2-5.9 3.7-8.5"/>',
 };
+const launch = text => { sgl.hidden = true; if (text.trim()) nxp('go', { text, engine: $('eng').value }); };
+function drawSug() {
+  sgl.hidden = !items.length;
+  $('sbox').classList.toggle('open', !!items.length);
+  const low = typed.toLowerCase();
+  sgl.replaceChildren(...items.map((it, i) => {
+    const row = h('div', { className: 'sgi' + (i === sel ? ' on' : '') });
+    row.innerHTML = `<svg viewBox="0 0 24 24">${SICO[it.type] || SICO.search}</svg>`;
+    const t = h('span', { className: 'st' });
+    if (it.type === 'search' && it.text.toLowerCase().startsWith(low) && it.text.length > typed.length) t.append(it.text.slice(0, typed.length), h('b', { textContent: it.text.slice(typed.length) }));
+    else t.textContent = it.text;
+    row.append(t);
+    if (it.type !== 'search') row.append(h('small', { textContent: it.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60) }));
+    row.onmousedown = e => { e.preventDefault(); launch(it.url || it.text); };
+    return row;
+  }));
+}
+async function refresh() {
+  const n = ++sugN, list = typed.trim() ? await nxp('suggest2', typed) : [];
+  if (n !== sugN) return;
+  items = list || []; sel = -1; drawSug();
+}
+s.oninput = () => { typed = s.value; clearTimeout(sugT); sugT = setTimeout(refresh, 80); };
+s.onkeydown = e => {
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && items.length) {
+    e.preventDefault();
+    sel += e.key === 'ArrowDown' ? 1 : -1;
+    if (sel < -1) sel = items.length - 1;
+    if (sel > items.length - 1) sel = -1;
+    s.value = sel < 0 ? typed : items[sel].url || items[sel].text;
+    drawSug();
+  } else if (e.key === 'Escape') { items = []; drawSug(); }
+  else if (e.key === 'Enter' && s.value.trim()) { clearTimeout(sugT); launch(s.value); }
+};
+s.onblur = () => setTimeout(() => { sgl.hidden = true; $('sbox').classList.remove('open'); }, 150);
+s.onfocus = () => { if (items.length) drawSug(); };
 
 // ---- Raccourcis ----
 async function loadTiles() {
@@ -389,6 +428,7 @@ async function syncOpts() {
   for (const [key] of TOG) $('o_' + key).checked = !!cfg[key];
   for (const [key, , list] of SELS) $('o_' + key).value = list.some(([v]) => v === cfg[key]) ? cfg[key] : list[0][0];
   applySearch();
+  $('eng').value = cfg.engine || 'google';
 }
 
 (async () => {

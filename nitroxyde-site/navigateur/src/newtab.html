@@ -28,7 +28,7 @@ main>:last-child{margin-bottom:auto}
 #clock[data-style=retro] b{font:700 46px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--ac);text-shadow:0 0 10px var(--gl)}
 
 /* Barre de recherche configurable */
-#sbox{display:flex;align-items:center;width:min(660px,90vw);height:52px;padding:0 8px 0 6px;border:1px solid var(--line);border-radius:26px;background:var(--bg2);transition:border-color .15s,box-shadow .2s}
+#sbox{position:relative;display:flex;align-items:center;width:min(660px,90vw);height:52px;padding:0 8px 0 6px;border:1px solid var(--line);border-radius:26px;background:var(--bg2);transition:border-color .15s,box-shadow .2s}
 #sbox:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--gl) 40%,transparent)}
 #sbox[data-size=s]{height:44px}
 #sbox[data-size=l]{height:64px}
@@ -37,6 +37,16 @@ main>:last-child{margin-bottom:auto}
 #sbox[data-shape=square]{border-radius:3px}
 #eng{max-width:112px;padding:6px;border:0;background:transparent;color:var(--dim);font:inherit;font-size:12px;outline:0;cursor:pointer}
 #eng option{background:var(--bg2);color:var(--tx)}
+/* Suggestions sous la barre du milieu */
+#sgl{position:absolute;left:-1px;right:-1px;top:100%;z-index:4;margin-top:6px;padding:6px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(var(--bg2),var(--bg2)),var(--bg);box-shadow:0 12px 32px #0008;text-align:left}
+#sgl[hidden]{display:none}
+.sgi{display:flex;align-items:center;gap:12px;height:38px;padding:0 12px;border-radius:10px;color:var(--tx);font-size:14.5px;white-space:nowrap;overflow:hidden;cursor:pointer}
+.sgi:hover,.sgi.on{background:var(--bg3)}
+.sgi svg{flex:none;width:17px;height:17px;fill:none;stroke:var(--dim);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sgi .st{overflow:hidden;text-overflow:ellipsis}
+.sgi .st b{font-weight:650}
+.sgi small{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--dim);font-size:12px}
+.sgi small::before{content:"— ";opacity:.6}
 #s{flex:1;min-width:0;height:100%;padding:0 14px;border:0;background:transparent;color:var(--tx);font:inherit;font-size:16px;outline:0}
 
 /* Raccourcis */
@@ -218,7 +228,7 @@ main>:last-child{margin-bottom:6vh}
   <img class="logo" src="logo.png" alt="Nitroxyde Browser">
   <div id="clock" hidden></div>
   <p id="hint">▶ Insère une pièce pour chercher</p>
-  <div id="sbox"><select id="eng" title="Moteur de recherche"></select><input id="s" autofocus spellcheck="false" placeholder="Rechercher ou saisir une adresse" list="sg"><datalist id="sg"></datalist></div>
+  <div id="sbox"><select id="eng" title="Moteur de recherche"></select><input id="s" autofocus spellcheck="false" autocomplete="off" placeholder="Rechercher ou saisir une adresse"><div id="sgl" hidden></div></div>
   </div>
   <div id="top"></div>
   <div id="wid"></div>

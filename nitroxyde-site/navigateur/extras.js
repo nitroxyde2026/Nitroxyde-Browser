@@ -7,7 +7,7 @@ const store = require('./store');
 const adblock = require('./adblock');
 const ai = require('./ai');
 
-let api, ducked = false;
+let api, ducked = false, away = '';   // away : 'min' (fenêtre réduite) ou 'blur' (autre application au premier plan)
 const UNP = __dirname.replace('app.asar', 'app.asar.unpacked');   // dossiers livrés avec l'exe : music/ et wallpapers/
 const user = (...p) => path.join(app.getPath('userData'), ...p);
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
@@ -179,7 +179,7 @@ exports.sendMusic = () => {
   const t = tt || curTrack(s, all);
   try {
     api.state.win.webContents.send('music', {
-      on: !!(s.musicOn && t && !(ducked && s.musicAuto)),
+      on: !!(s.musicOn && t && !(ducked && s.musicAuto) && !(away === 'min' && s.musicMinimize !== false) && !(away && s.musicBlur)),
       src: t ? pathToFileURL(t).href : '', vol: s.musicVol, loop: !!tt || s.musicRepeat !== false || all.length < 2,   // « Répéter » : la piste choisie tourne en boucle
     });
   } catch {}
@@ -202,6 +202,8 @@ function leaveSpecial(s) {
 }
 exports.specialTrack = themeTrack;
 
+// Fenêtre réduite (ou autre appli au premier plan) : la musique s'arrête, elle reprend au retour
+exports.away = v => { if (v !== away) { away = v; exports.sendMusic(); } };
 exports.duck = on => { if (on !== ducked) { ducked = on; exports.sendMusic(); } };
 
 exports.musicNext = () => {
@@ -377,6 +379,7 @@ exports.handle = async (e, cmd, arg) => {
     case 'notes': return store.get('notes').text;
     case 'noteSet': store.get('notes').text = String(arg).slice(0, 20000); store.save('notes'); break;
     case 'aiKey': ai.setKey(arg.provider, arg.key); break;
+    case 'aiTest': return ai.test(String(arg));
     case 'blockInfo': return { engine: adblock.active() };
     case 'about': return { version: app.getVersion(), chrome: process.versions.chrome, electron: process.versions.electron };
     case 'reset': {   // les clés d'IA et l'écran d'accueil déjà vu sont conservés

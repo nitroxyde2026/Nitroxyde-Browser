@@ -14,7 +14,7 @@ function drop(v, clear) {
 const BAR_FULL = 230, BAR_MINI = 52;
 
 const PROVIDERS = {
-  groq: { name: 'Groq', kind: 'openai', base: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', keyField: 'groqKey' },
+  groq: { name: 'Groq', kind: 'openai', base: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b', keyField: 'groqKey' },
   openai: { name: 'ChatGPT', kind: 'openai', base: 'https://api.openai.com/v1', model: 'gpt-4o-mini', keyField: 'openaiKey' },
   gemini: { name: 'Gemini', kind: 'gemini', base: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-2.5-flash', keyField: 'geminiKey' },
   claude: { name: 'Claude', kind: 'claude', base: 'https://api.anthropic.com/v1', model: 'claude-haiku-5-5', keyField: 'claudeKey' },
@@ -43,7 +43,7 @@ exports.hasKey = p => !!key(p || prov());
 exports.setKey = (p, k) => {
   if (!PROVIDERS[p]) return;
   const s = store.get('settings');
-  k = String(k || '').trim();
+  k = String(k || '').replace(/[\s\u200b-\u200d\ufeff"'«»]/g, '');   // espaces, retours à la ligne ou guillemets collés avec la clé
   s[PROVIDERS[p].keyField] = !k ? '' : safeStorage.isEncryptionAvailable() ? safeStorage.encryptString(k).toString('base64') : k;
   store.save('settings');
 };
@@ -51,13 +51,45 @@ exports.setKey = (p, k) => {
 const headers = (p, k) => PROVIDERS[p].kind === 'claude' ? { 'x-api-key': k, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }
   : PROVIDERS[p].kind === 'gemini' ? { 'x-goog-api-key': k, 'content-type': 'application/json' } : { Authorization: 'Bearer ' + k, 'content-type': 'application/json' };
 
+// Modèles préférés si celui enregistré a été retiré par le fournisseur (Groq a retiré Llama 3.3 le 16/08/2026)
+const PREF = {
+  groq: [/^openai\/gpt-oss-120b$/, /^qwen\/qwen[\d.]+-\d+b$/, /^openai\/gpt-oss-20b$/, /gpt-oss/, /llama/, /./],
+  openai: [/^gpt-4\.1-mini$/, /^gpt-4o-mini$/, /^gpt-[\d.]+-mini$/, /^gpt-[\d.]+$/, /./],
+  gemini: [/^gemini-[\d.]+-flash$/, /^gemini-[\d.]+-flash-lite$/, /^gemini-[\d.]+-pro$/, /./],
+  claude: [/haiku/, /sonnet/, /./],
+};
+async function bestModel(p, avoid) {
+  const ids = (await models(p)).filter(id => id !== avoid).sort((a, b) => b.localeCompare(a, 'en', { numeric: true }));   // plus récent d'abord
+  for (const re of PREF[p]) { const m = ids.find(id => re.test(id)); if (m) return m; }
+  return '';
+}
+const MODEL_GONE = /model|decommission|deprecat|not found|does not exist|no longer|unsupported|retired/i;
+// Corps de requête adapté au modèle : les modèles « raisonnants » d'OpenAI refusent temperature et max_tokens
+function openaiBody(p, model, extra) {
+  const reasoning = p === 'openai' && /^(o\d|gpt-5)/.test(model);
+  const b = { model, ...extra };
+  if (reasoning) { delete b.temperature; b.max_completion_tokens = b.max_tokens; delete b.max_tokens; }
+  if (p === 'groq' && /gpt-oss/.test(model)) b.reasoning_effort = 'low';   // réponses rapides
+  return b;
+}
+
 async function failure(res, P) {
   let msg = '';
   try { const j = await res.json(); msg = j.error?.message || j.error?.status || ''; } catch {}
-  if (res.status === 401 || res.status === 403) return `Clé ${P.name} refusée.`;
-  if (res.status === 429) return `Limite ${P.name} atteinte, réessaie dans un instant.`;
-  if (res.status === 400 || res.status === 404) return `Modèle ou requête refusés par ${P.name} : essaie un autre modèle. ${msg}`.trim();
-  return `Erreur ${P.name} ${res.status}. ${msg}`.trim();
+  if ((res.status === 400 || res.status === 404) && MODEL_GONE.test(msg)) { const e = new Error(msg); e.modelGone = true; return e; }
+  if (res.status === 401 || res.status === 403) return new Error(`Clé ${P.name} refusée : vérifie qu’elle est complète (copie-la de nouveau depuis le site de ${P.name}).`);
+  if (res.status === 429) return new Error(`Limite ${P.name} atteinte, réessaie dans un instant.`);
+  if (res.status === 400 || res.status === 404) return new Error(`Requête refusée par ${P.name}. ${msg}`.trim());
+  return new Error(`Erreur ${P.name} ${res.status}. ${msg}`.trim());
+}
+// Modèle retiré : on bascule une fois sur le meilleur modèle encore disponible, et on le retient
+async function retryModel(p, model, err) {
+  if (!err.modelGone) throw err;
+  const m = await bestModel(p, model);
+  if (!m) throw new Error(`Le modèle ${model} n’est plus disponible chez ${PROVIDERS[p].name} : choisis-en un autre dans l’assistant IA.`);
+  const s = store.get('settings');
+  s.aiModels = { ...(s.aiModels || {}), [p]: m }; store.save('settings');
+  return m;
 }
 
 async function readSSE(res, onData) {
@@ -76,18 +108,22 @@ async function readSSE(res, onData) {
 }
 
 // Réponse en flux, quel que soit le fournisseur
-async function stream(p, messages, signal, onDelta) {
-  const P = PROVIDERS[p], k = key(p), model = modelOf(p);
+async function stream(p, messages, signal, onDelta, model = modelOf(p), retried = false) {
+  const P = PROVIDERS[p], k = key(p);
   if (!k) throw new Error(`Ajoute ta clé ${P.name} dans Paramètres > Assistant IA.`);
   const sys = messages.find(m => m.role === 'system')?.content, chat = messages.filter(m => m.role !== 'system');
   let url, body;
-  if (P.kind === 'openai') { url = P.base + '/chat/completions'; body = { model, stream: true, temperature: 0.4, max_tokens: 1500, messages }; }
+  if (P.kind === 'openai') { url = P.base + '/chat/completions'; body = openaiBody(p, model, { stream: true, temperature: 0.4, max_tokens: 1500, messages }); }
   else if (P.kind === 'gemini') {
     url = `${P.base}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
     body = { systemInstruction: sys ? { parts: [{ text: sys }] } : undefined, contents: chat.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })), generationConfig: { temperature: 0.4, maxOutputTokens: 1500 } };
   } else { url = P.base + '/messages'; body = { model, max_tokens: 1500, stream: true, system: sys, messages: chat }; }
   const res = await net.fetch(url, { method: 'POST', signal, headers: headers(p, k), body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(await failure(res, P));
+  if (!res.ok) {
+    const err = await failure(res, P);
+    if (retried) throw err;
+    return stream(p, messages, signal, onDelta, await retryModel(p, model, err), true);
+  }
   let out = '';
   await readSSE(res, j => {
     const t = P.kind === 'openai' ? j.choices?.[0]?.delta?.content
@@ -99,22 +135,36 @@ async function stream(p, messages, signal, onDelta) {
 }
 
 // Réponse complète (sans flux) : JSON des cartes, traduction…
-exports.complete = async (messages, json) => {
-  const p = prov(), P = PROVIDERS[p], k = key(p), model = modelOf(p);
+exports.complete = async (messages, json, model = modelOf(prov()), retried = false) => {
+  const p = prov(), P = PROVIDERS[p], k = key(p);
   if (!k) throw new Error(`Clé ${P.name} manquante.`);
   const sys = messages.find(m => m.role === 'system')?.content, chat = messages.filter(m => m.role !== 'system');
   let url, body;
-  if (P.kind === 'openai') { url = P.base + '/chat/completions'; body = { model, temperature: 0.3, max_tokens: 1800, messages, ...(json ? { response_format: { type: 'json_object' } } : {}) }; }
+  if (P.kind === 'openai') { url = P.base + '/chat/completions'; body = openaiBody(p, model, { temperature: 0.3, max_tokens: 1800, messages, ...(json ? { response_format: { type: 'json_object' } } : {}) }); }
   else if (P.kind === 'gemini') {
     url = `${P.base}/models/${encodeURIComponent(model)}:generateContent`;
     body = { systemInstruction: sys ? { parts: [{ text: sys }] } : undefined, contents: chat.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })), generationConfig: { temperature: 0.3, maxOutputTokens: 1800, ...(json ? { responseMimeType: 'application/json' } : {}) } };
   } else { url = P.base + '/messages'; body = { model, max_tokens: 1800, system: sys, messages: chat }; }
   const res = await net.fetch(url, { method: 'POST', signal: AbortSignal.timeout(30000), headers: headers(p, k), body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(await failure(res, P));
+  if (!res.ok) {
+    const err = await failure(res, P);
+    if (retried) throw err;
+    return exports.complete(messages, json, await retryModel(p, model, err), true);
+  }
   const j = await res.json();
   return P.kind === 'openai' ? j.choices?.[0]?.message?.content || ''
     : P.kind === 'gemini' ? j.candidates?.[0]?.content?.parts?.map(x => x.text || '').join('') || ''
     : (j.content || []).map(c => c.text || '').join('');
+};
+
+// Test d'une clé depuis les Paramètres : petite question, réponse ou message d'erreur clair
+exports.test = async p => {
+  if (!PROVIDERS[p]) return { ok: false, err: 'Fournisseur inconnu' };
+  if (!key(p)) return { ok: false, err: 'Aucune clé enregistrée.' };
+  try {
+    const t = await stream(p, [{ role: 'user', content: 'Réponds seulement : OK' }], AbortSignal.timeout(25000), () => {});
+    return { ok: true, model: modelOf(p), text: t.trim().slice(0, 40) };
+  } catch (err) { return { ok: false, err: err.name === 'TimeoutError' ? 'Pas de réponse (connexion ?)' : err.message }; }
 };
 
 // Liste des modèles proposés par le fournisseur actif

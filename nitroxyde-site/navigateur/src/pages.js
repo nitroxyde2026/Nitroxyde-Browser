@@ -165,12 +165,23 @@ const views = {
         chk('widgets', 'Widgets personnalisés'),
         pick('searchSize', 'Taille de la barre de recherche', [['s', 'Petite'], ['m', 'Moyenne'], ['l', 'Grande']]),
         pick('searchShape', 'Forme de la barre de recherche', [['pill', 'Arrondie'], ['round', 'Douce'], ['square', 'Droite']])),
-      sec('Recherche', pick('engine', 'Moteur de recherche', [['duckduckgo', 'DuckDuckGo'], ['google', 'Google'], ['brave', 'Brave Search'], ['ecosia', 'Ecosia'], ['startpage', 'Startpage']])),
+      sec('Recherche', pick('engine', 'Moteur de recherche (barre du haut et nouvel onglet)', [['google', 'Google'], ['duckduckgo', 'DuckDuckGo'], ['bing', 'Bing'], ['brave', 'Brave Search'], ['ecosia', 'Ecosia'], ['qwant', 'Qwant'], ['startpage', 'Startpage']]),
+        chk('suggestOn', 'Suggestions de recherche pendant la saisie (envoie ce que tu tapes au moteur choisi)')),
       sec('Assistant IA',
-        pick('aiProvider', 'Fournisseur de l’aperçu et du panneau ✦', [['groq', 'Groq (Llama, gratuit)'], ['openai', 'ChatGPT (OpenAI)'], ['gemini', 'Gemini (Google)'], ['claude', 'Claude (Anthropic)']]),
+        pick('aiProvider', 'Fournisseur de l’aperçu et du panneau ✦', [['groq', 'Groq (gratuit)'], ['openai', 'ChatGPT (OpenAI)'], ['gemini', 'Gemini (Google)'], ['claude', 'Claude (Anthropic)']]),
         ...[['groq', 'Groq', 'gsk_…'], ['openai', 'ChatGPT (OpenAI)', 'sk-…'], ['gemini', 'Gemini', 'AIza…'], ['claude', 'Claude', 'sk-ant-…']].map(([id, name, ph]) =>
-          lab(`Clé ${name}${s.hasKeys[id] ? ' (enregistrée)' : ''}`, h('input', { type: 'password', placeholder: s.hasKeys[id] ? '••••••••' : ph, id: 'k_' + id }),
-            btn('Enregistrer', async e => { await nxp('aiKey', { provider: id, key: document.getElementById('k_' + id).value }); e.target.textContent = 'Enregistrée'; }))),
+          h('div', {},
+            lab(`Clé ${name}${s.hasKeys[id] ? ' (enregistrée)' : ''}`, h('input', { type: 'password', placeholder: s.hasKeys[id] ? '••••••••' : ph, id: 'k_' + id }),
+              btn('Enregistrer et tester', async e => {
+                const v = document.getElementById('k_' + id).value, out = document.getElementById('kr_' + id);
+                if (v.trim()) await nxp('aiKey', { provider: id, key: v });   // champ vide : la clé déjà enregistrée est gardée
+                e.target.textContent = 'Test…'; out.textContent = '';
+                const r = await nxp('aiTest', id);
+                e.target.textContent = 'Enregistrer et tester';
+                out.textContent = r?.ok ? `✓ Clé valide — modèle ${r.model}` : '✕ ' + (r?.err || 'Erreur inconnue');
+                out.style.color = r?.ok ? '#2ee59d' : '#ff7b7b';
+              })),
+            h('small', { className: 'note', id: 'kr_' + id }))),
         chk('aiAuto', 'Aperçu IA au-dessus des résultats de recherche'),
         note('Une recherche tapée dans la barre d’adresse ou sur le nouvel onglet affiche la réponse du fournisseur choisi au-dessus des résultats, qui restent visibles en dessous. Il faut une clé API : Groq et Gemini en proposent une gratuite, ChatGPT et Claude fonctionnent avec des crédits payants. Un abonnement ChatGPT, Gemini ou Claude ne donne pas de clé : pour discuter avec ton compte, utilise le bouton ✦ de la barre latérale. Ta question (et le texte de la page si tu coches « Utiliser le contenu de la page ») part chez le fournisseur choisi.')),
       sec('Confidentialité',
@@ -202,7 +213,8 @@ const views = {
         dir('downloadDir', 'Dossier de téléchargement', 'Téléchargements'), chk('dlSort', 'Ranger automatiquement par type (Images, Vidéos, Documents…)'),
         pick('dlLimitKB', 'Limite de débit des téléchargements', [[0, 'Aucune'], [256, '256 Ko/s'], [512, '512 Ko/s'], [1024, '1 Mo/s'], [2048, '2 Mo/s'], [5120, '5 Mo/s']], Number),
         note('Chaque fichier téléchargé est analysé : empreinte SHA-256, types de fichiers à risque et, sous Windows, analyse par Microsoft Defender.')),
-      sec('Musique de fond', chk('musicStart', 'Lancer la musique au démarrage du navigateur'), chk('musicRepeat', 'Répéter la piste en boucle (décoché : les pistes s’enchaînent)'), chk('musicAuto', 'Mettre en pause quand un onglet joue du son'),
+      sec('Musique de fond', chk('musicStart', 'Lancer la musique au démarrage du navigateur'), chk('musicRepeat', 'Répéter la piste en boucle (décoché : les pistes s’enchaînent)'),
+        chk('musicMinimize', 'Couper la musique quand le navigateur est réduit'), chk('musicBlur', 'Couper aussi quand une autre application (un jeu…) passe au premier plan'), chk('musicAuto', 'Mettre en pause quand un onglet joue du son'),
         ...(mus.special ? [note(`Thème ${mus.special} actif : sa musique « ${mus.name} » tourne en boucle. Choisis un autre thème pour retrouver tes pistes.`)] : []),
         lab(mus.on ? 'Lecture en cours : ' + mus.name : 'Musique en pause', btn(mus.on ? '⏸ Pause' : '▶ Lecture', async () => { await nxp('musicCtl', { op: 'toggle' }); route(); }),
           btn('⏭ Suivante', async () => { await nxp('musicCtl', { op: 'next' }); route(); })),

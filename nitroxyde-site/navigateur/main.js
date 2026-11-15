@@ -49,7 +49,7 @@ const SIDEHTML = pathToFileURL(path.join(__dirname, 'src', 'side.html')).href;
 const ENGINES = {
   duckduckgo: 'https://duckduckgo.com/?q=', google: 'https://www.google.com/search?q=',
   brave: 'https://search.brave.com/search?q=', ecosia: 'https://www.ecosia.org/search?q=',
-  startpage: 'https://www.startpage.com/do/search?q=',
+  startpage: 'https://www.startpage.com/do/search?q=', bing: 'https://www.bing.com/search?q=', qwant: 'https://www.qwant.com/?q=',
 };
 const BLOCK = new RegExp('^https?://([^/]*\\.)?(' + [
   'doubleclick.net', 'googlesyndication.com', 'googleadservices.com', 'googletagservices.com', 'google-analytics.com', 'adservice.google.com',
@@ -105,7 +105,7 @@ function resolve(q) {
   if (/^nitroxyde:\/\//i.test(q)) return PAGES + '#' + q.slice(12);
   if (/^[a-z][\w+.-]*:\/\//i.test(q)) return clean(q);
   if (/^(localhost|[\w-]+(\.[\w-]+)+)(:\d+)?(\/.*)?$/i.test(q)) return 'https://' + q;
-  return (ENGINES[store.get('settings').engine] || ENGINES.duckduckgo) + encodeURIComponent(q);
+  return (ENGINES[store.get('settings').engine] || ENGINES.google) + encodeURIComponent(q);
 }
 const shown = u => u.startsWith(PAGES) ? 'nitroxyde://' + u.slice(PAGES.length + 1) : u === NEWTAB || u.startsWith(WELCOME) ? '' : u;
 
@@ -141,6 +141,17 @@ function applyLook() {
 }
 
 // Lance une recherche/adresse dans l'onglet qui l'a demandée (barre de la page Nouvel onglet)
+// Recherche ou adresse tapée dans la barre du haut (ou choisie dans ses suggestions) : dans l'onglet actif
+function goActive(q) {
+  const t = state.active;
+  if (!t) return createTab(resolve(q));
+  if (!t.view) activate(t.id);
+  const wc = t.view?.webContents;
+  if (!wc) return;
+  t.url = resolve(q); load(wc, t.url); wc.focus();
+  if (isSearch(q)) ai.pre(q);
+}
+
 function go(sender, text, engine) {
   const t = state.tabs.find(x => x.view?.webContents === sender);
   if (t) { t.url = engine && ENGINES[engine] && isSearch(text) ? ENGINES[engine] + encodeURIComponent(text) : resolve(text); load(t.view.webContents, t.url); if (isSearch(text)) ai.pre(text); }
@@ -190,9 +201,11 @@ function push() {
 
 // Espace occupé par l'interface selon la position de la barre d'onglets et le panneau IA
 // Largeur du panneau latéral : réglable à la souris (poignée), bornée selon la taille de la fenêtre
+// Chaque service garde sa propre largeur (Discord plus large que la calculatrice, par exemple)
 function panelW() {
-  const [width] = state.win.getContentSize();
-  return Math.round(Math.max(300, Math.min(store.get('settings').sideW || 440, width * 0.6, 1100)));
+  const [width] = state.win.getContentSize(), s = store.get('settings'), id = state.side;
+  const w = (s.sideWs || {})[id] || sidebar.DEFW[id] || s.sideW || 440;
+  return Math.round(Math.max(300, Math.min(w, width * 0.7, 1400)));
 }
 
 function insets() {
@@ -467,7 +480,10 @@ ipcMain.handle('nav', (e, cmd, arg) => {
   if (!win || e.sender !== win.webContents) return;   // seule notre interface peut commander
   const wc = active?.view?.webContents;
   switch (cmd) {
-    case 'go': if (wc) { const q = String(arg); active.url = resolve(q); load(wc, active.url); wc.focus(); if (isSearch(q)) ai.pre(q); } break;
+    case 'go': goActive(String(arg)); popup.suggestHide(); break;
+    case 'sug': popup.suggest(arg); break;
+    case 'sugMove': return popup.suggestMove(+arg);
+    case 'sugHide': popup.suggestHide(); break;
     case 'back': wc?.navigationHistory.goBack(); break;
     case 'forward': wc?.navigationHistory.goForward(); break;
     case 'reload': wc?.reload(); break;
@@ -495,9 +511,10 @@ ipcMain.handle('nav', (e, cmd, arg) => {
     case 'svcIcons': return extras.svcIcons();
     case 'sideSet': sidebar.show(String(arg)); break;
     case 'sideW': {   // glisser la poignée : nouvelle largeur du panneau latéral (double-clic = largeur par défaut)
-      const s = store.get('settings');
-      s.sideW = arg === 'reset' ? 440 : Math.round(+arg) || 440;
-      s.sideW = Math.max(300, Math.min(s.sideW, win.getContentSize()[0] * 0.6, 1100));
+      const s = store.get('settings'), id = state.side;
+      s.sideWs = s.sideWs || {};
+      if (arg === 'reset') delete s.sideWs[id];
+      else s.sideWs[id] = Math.round(Math.max(300, Math.min(+arg || 440, win.getContentSize()[0] * 0.7, 1400)));
       store.save('settings'); layout();
       break;
     }
@@ -519,7 +536,7 @@ app.whenReady().then(() => {
     actions: () => Object.entries(ACTIONS).map(([id, [label, def]]) => ({ id, label, def })) });
   nativeTheme.on('updated', () => { if (store.get('settings').theme === 'auto') applyLook(); });
   const hub = { state, layout: () => layout(), look, applyLook, push, toast, createTab, closeTab, activate, addTab, kill, shown, SIDE, SIDEHTML, NEWTAB, PAGES,
-    insets: () => insets(), page, zoom, clearData, partitions: [PART, PRIV, SIDE], run: id => ACTIONS[id]?.[2](),
+    insets: () => insets(), page, zoom, clearData, go: (_, q) => goActive(q), partitions: [PART, PRIV, SIDE], run: id => ACTIONS[id]?.[2](),
     keys: () => { const mine = store.get('settings').keys || {}; return Object.fromEntries(Object.entries(ACTIONS).map(([id, [, def]]) => [id, mine[id] || def])); },
     profile: () => extras.profileName?.() || '' };
   ai.init(hub); sidebar.init(hub); workspace.init(hub); tools.init(hub); memory.init(hub);
@@ -534,6 +551,8 @@ app.whenReady().then(() => {
     if ((s.tuneV || 0) < 1) { s.tuneV = 1; s.news = true; s.perf = false; s.anim = true; s.sleepMin = 3; store.save('settings'); }
     // 0.9 : musique de base au démarrage, widgets « Jeux » et « Favoris » retirés du nouvel onglet
     if ((s.tuneV || 0) < 2) { s.tuneV = 2; s.musicStart = true; if (s.wall === 'auto' || s.wall === 'none') s.wall = 'off'; delete s.games; delete s.bmWidget; delete s.bmView; store.save('settings'); }
+    // 0.11 : Google par défaut (si le moteur n'avait jamais été changé), suggestions de recherche
+    if ((s.tuneV || 0) < 3) { s.tuneV = 3; if (s.engine === 'duckduckgo') s.engine = 'google'; s.suggestOn = true; store.save('settings'); }
   }
 
   // Fenêtre : taille, position, plein écran et agrandissement retrouvés au lancement (et après un redémarrage)
@@ -547,6 +566,13 @@ app.whenReady().then(() => {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, autoplayPolicy: 'no-user-gesture-required' },
   });
   win.on('resize', layout);
+  // Musique de fond coupée quand le navigateur est réduit (ou en arrière-plan, si l'option est cochée)
+  win.on('minimize', () => extras.away('min'));
+  win.on('hide', () => extras.away('min'));
+  win.on('restore', () => extras.away(win.isFocused() ? '' : 'blur'));
+  win.on('show', () => { if (!win.isMinimized()) extras.away(win.isFocused() ? '' : 'blur'); });
+  win.on('blur', () => { if (!win.isMinimized()) extras.away('blur'); });
+  win.on('focus', () => extras.away(''));
   if (ws.max) win.maximize();
   if (ws.full) win.setFullScreen(true);
   const saveWin = () => {

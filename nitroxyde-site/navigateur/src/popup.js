@@ -21,7 +21,35 @@ const act = (icon, label, id) => item(icon, label, () => nxm.call('act', id), id
 const call = (cmd, arg) => nxm.call(cmd, arg);
 const fit = () => requestAnimationFrame(() => nxm.call('size', box.scrollHeight + 8));
 
-nxm.onOpen((kind, info) => { I = info; K = info.keys || {}; (kind === 'vpn' ? vpnView : menuView)(); fit(); });
+nxm.onOpen((kind, info) => {
+  document.body.dataset.kind = kind;
+  if (kind === 'suggest') return suggestView(info);
+  I = info; K = info.keys || {}; (kind === 'vpn' ? vpnView : menuView)(); fit();
+});
+
+// ---------------- Suggestions de la barre d'adresse ----------------
+const ICO = {
+  search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
+  history: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  bookmark: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  url: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.7 5.4 3.7 8.5s-1.2 5.9-3.7 8.5c-2.5-2.6-3.7-5.4-3.7-8.5s1.2-5.9 3.7-8.5"/>',
+};
+function suggestView({ items, sel, q }) {
+  const low = q.toLowerCase();
+  box.replaceChildren(...items.map((it, i) => {
+    const row = h('div', { className: 'sg' + (i === sel ? ' on' : '') });
+    row.innerHTML = `<svg viewBox="0 0 24 24">${ICO[it.type] || ICO.search}</svg>`;
+    const t = h('span', { className: 'st' });
+    if (it.type === 'search' && it.text.toLowerCase().startsWith(low) && it.text.length > q.length) t.append(it.text.slice(0, q.length), h('b', { textContent: it.text.slice(q.length) }));   // la suite proposée en gras, comme Google
+    else t.textContent = it.text;
+    row.append(t);
+    if (it.type !== 'search') row.append(h('small', { textContent: it.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60) }));
+    if (it.type === 'history') row.append(h('i', { className: 'del', textContent: '✕', title: 'Retirer de l’historique', onmousedown: e => { e.stopPropagation(); e.preventDefault(); call('delHist', i); } }));
+    row.onmousedown = e => { e.preventDefault(); call('pick', i); };
+    return row;
+  }));
+  fit();
+}
 
 // ---------------- Menu ☰ ----------------
 function menuView() {
@@ -60,6 +88,10 @@ function menuView() {
           h('button', { className: 'sq', textContent: '↻', title: 'Traduire dans cette langue', onclick: () => call('translate', lang.value) }))
       : h('div', { className: 'ctl' + (web ? '' : ' dis'), title: web ? '' : 'Ouvre un site pour le traduire' }, h('span', { className: 'l', textContent: 'Traduire en' }), lang,
           h('button', { textContent: 'Traduire', disabled: !web, onclick: () => call('translate', lang.value) })),
+    h('div', { className: 'ctl' }, h('span', { className: 'l', textContent: 'Rechercher avec' }),
+      h('select', { title: 'Moteur de la barre d’adresse et du nouvel onglet', onchange: e => call('engine', e.target.value) },
+        ...[['google', 'Google'], ['duckduckgo', 'DuckDuckGo'], ['bing', 'Bing'], ['brave', 'Brave Search'], ['ecosia', 'Ecosia'], ['qwant', 'Qwant'], ['startpage', 'Startpage']]
+          .map(([v, n]) => h('option', { value: v, textContent: n, selected: v === I.engine })))),
     h('hr'),
     h('div', { className: 'grid' },
       ...[[ICONS.history, 'Historique', 'history'], [ICONS.star, 'Favoris', 'bookmarks'], [ICONS.down, 'Télécharg.', 'downloads'], [ICONS.key, 'Mots de passe', 'passwords']]

@@ -10,14 +10,32 @@ const WEB = {
   chatgpt: 'https://chatgpt.com/', gemini: 'https://gemini.google.com/', claude: 'https://claude.ai/',
 };
 const MUSIC = ['music', 'ytmusic', 'spotify', 'deezer'], AIS = ['chatgpt', 'gemini', 'claude'];
-// Largeur minimale de la mise en page « ordinateur » de chaque site : en dessous, la page est réduite pour tenir
-// entièrement dans le panneau (comme un dézoom automatique). Les sites déjà adaptés au mobile restent à 100 %.
-const MINW = { discord: 940, whatsapp: 760, spotify: 800, deezer: 980, ytmusic: 640, telegram: 0, chatgpt: 0, gemini: 0, claude: 0 };
-const widths = new Map();
+// Trois cas selon le site :
+//  • version téléphone disponible dans un navigateur (YouTube Music) : panneau étroit → version téléphone,
+//    panneau élargi au-delà de MOBILE[id] px → version ordinateur (rechargée automatiquement) ;
+//  • sites déjà adaptables (Telegram, ChatGPT, Gemini, Claude) : 100 %, ils se réorganisent tout seuls ;
+//  • sites sans version téléphone hors de leur appli (Discord, WhatsApp, Spotify, Deezer) : version ordinateur,
+//    réduite juste assez pour tenir (jamais sous 70 % pour rester lisible) ; elle grandit quand on élargit.
+const MINW = { discord: 800, whatsapp: 720, spotify: 760, deezer: 900, ytmusic: 0, telegram: 0, chatgpt: 0, gemini: 0, claude: 0 };
+const MOBILE = { ytmusic: 700 };
+exports.DEFW = { discord: 600, whatsapp: 560, spotify: 560, deezer: 600 };   // largeur d'ouverture conseillée (mémorisée ensuite par service)
+const MOBILE_UA = `Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Mobile Safari/537.36`;
+const widths = new Map(), modes = new Map(), modeT = new Map();
 function fit(id, v) {
   const w = widths.get(v) || 440, s = store.get('settings'), user = (s.sideZoom || {})[id] || 1;
-  const z = Math.max(0.3, Math.min(2, (MINW[id] ? Math.max(0.5, Math.min(1, w / MINW[id])) : 1) * user));
+  const z = Math.max(0.3, Math.min(2, (MINW[id] ? Math.max(0.7, Math.min(1, w / MINW[id])) : 1) * user));
   if (Math.abs(v.webContents.getZoomFactor() - z) > 0.005) v.webContents.setZoomFactor(z);
+  if (MOBILE[id]) {   // bascule téléphone / ordinateur, une fois le glissement de la poignée terminé
+    const want = w < MOBILE[id] ? 'mobile' : 'desktop';
+    clearTimeout(modeT.get(v));
+    if (modes.get(v) !== want) modeT.set(v, setTimeout(() => {
+      const wc = v.webContents;
+      if (wc.isDestroyed() || modes.get(v) === want) return;
+      modes.set(v, want);
+      wc.setUserAgent(want === 'mobile' ? MOBILE_UA : wc.session.getUserAgent());
+      wc.reload();
+    }, modes.has(v) ? 500 : 0));
+  }
 }
 // Ctrl + molette, Ctrl + / Ctrl - / Ctrl 0 dans le panneau : zoom du service, mémorisé
 function userZoom(id, v, f) {
@@ -54,6 +72,7 @@ function createApp(id) {
   wc.on('did-finish-load', () => fit(id, v));
   wc.on('did-navigate', () => fit(id, v));
   wc.on('zoom-changed', (_, dir) => userZoom(id, v, dir === 'in' ? 1.1 : 1 / 1.1));
+  if (MOBILE[id]) { const w = widths.get(v) || 440, m = w < MOBILE[id] ? 'mobile' : 'desktop'; modes.set(v, m); if (m === 'mobile') wc.setUserAgent(MOBILE_UA); }   // première ouverture directement dans la bonne version
   wc.on('before-input-event', (e, i) => {
     if (i.type !== 'keyDown' || !(i.control || i.meta)) return;
     const f = i.key === '0' ? 0 : ['=', '+'].includes(i.key) ? 1.1 : i.key === '-' ? 1 / 1.1 : null;
@@ -88,7 +107,7 @@ function open(id) {
   hiddenAt.delete(v);
   if (MINW[id] && !s.sideHint) {   // une seule fois : comment agrandir le panneau
     s.sideHint = true; store.save('settings');
-    api.toast({ icon: '↔', title: 'Panneau latéral', text: 'Le site est réduit pour tenir dans le panneau. Glisse son bord pour l’élargir ; Ctrl + molette pour zoomer.', ms: 8000 });
+    api.toast({ icon: '↔', title: 'Panneau latéral', text: 'Ce site n’a pas de version téléphone en dehors de son appli : sa version ordinateur est ajustée au panneau. Glisse le bord du panneau pour l’élargir ; Ctrl + molette pour zoomer.', ms: 8000 });
   } else if (id === 'spotify' && !s.spotifyNote) {
     s.spotifyNote = true; store.save('settings');
     api.toast({ icon: 'ℹ', title: 'Spotify', text: 'Le lecteur web de Spotify exige Widevine, absent d’Electron : il peut refuser de lire.', ms: 9000 });

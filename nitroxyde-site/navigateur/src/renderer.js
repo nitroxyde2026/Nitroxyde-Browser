@@ -181,15 +181,28 @@ $('menu').onclick = () => nx.nav('menu');
 $('vpn').onclick = () => nx.nav('vpn');
 $('shield').onclick = () => nx.nav('shield');
 $('ai').onclick = () => nx.nav('ai');
-$('url').onkeydown = e => { if (e.key === 'Enter') { nx.nav('go', e.target.value); e.target.blur(); } };
+// Barre d'adresse : suggestions du moteur sous le champ (comme Chrome), ↑ ↓ pour choisir, Entrée pour lancer
+let sugT = 0, typed = '';
+const urlRect = () => { const r = $('url').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; };
+$('url').oninput = e => {
+  typed = e.target.value;
+  clearTimeout(sugT);
+  sugT = setTimeout(() => nx.nav('sug', { q: typed, rect: urlRect() }), 80);
+};
+$('url').onkeydown = async e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const v = await nx.nav('sugMove', e.key === 'ArrowDown' ? 1 : -1);
+    if (v != null) { $('url').value = v; $('url').setSelectionRange(v.length, v.length); }
+  } else if (e.key === 'Escape') nx.nav('sugHide');
+  else if (e.key === 'Enter' && e.target.value.trim()) { clearTimeout(sugT); nx.nav('go', e.target.value); e.target.blur(); }
+};
+$('url').addEventListener('blur', () => setTimeout(() => nx.nav('sugHide'), 200));
+nx.onUrlBlur(() => $('url').blur());
 nx.onFocusUrl(() => { $('url').focus(); $('url').select(); });
 
 // Thème et suggestions d'adresses
 nx.onTheme(skin);
-$('url').oninput = async e => {
-  const list = await nx.nav('suggest', e.target.value);
-  $('sg').replaceChildren(...list.map(u => Object.assign(document.createElement('option'), { value: u })));
-};
 
 // Musique de fond : la page de l'interface vit toute la session, elle joue la piste choisie
 // Repli d'un onglet fermé : largeur → 0 en 180 ms (les voisins glissent), puis retrait

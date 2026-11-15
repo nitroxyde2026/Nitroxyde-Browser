@@ -1,4 +1,4 @@
-const { app, ipcMain, dialog, shell, Menu, clipboard } = require('electron');
+const { app, ipcMain, dialog, shell, Menu, clipboard, net } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const store = require('./store');
@@ -101,6 +101,48 @@ exports.hookContents = (wc, t) => wc.on('context-menu', (_, p) => {
   Menu.buildFromTemplate(m).popup();
 });
 
+// ---- Suggestions de recherche du moteur choisi (comme Chrome) + historique et favoris ----
+const SUGGEST = {
+  google: q => [`https://suggestqueries.google.com/complete/search?client=firefox&hl=fr&ie=utf-8&oe=utf-8&q=${q}`, j => j[1]],
+  duckduckgo: q => [`https://duckduckgo.com/ac/?kl=fr-fr&q=${q}`, j => j.map(x => x.phrase)],
+  startpage: q => [`https://duckduckgo.com/ac/?kl=fr-fr&q=${q}`, j => j.map(x => x.phrase)],
+  bing: q => [`https://api.bing.com/osjson.aspx?market=fr-FR&query=${q}`, j => j[1]],
+  brave: q => [`https://search.brave.com/api/suggest?q=${q}`, j => j[1]],
+  ecosia: q => [`https://ac.ecosia.org/autocomplete?type=list&q=${q}`, j => j[1]],
+  qwant: q => [`https://api.qwant.com/v3/suggest?locale=fr_FR&q=${q}`, j => (j.data?.items || []).map(x => x.value)],
+};
+const sugCache = new Map();
+async function remote(q, engine) {
+  const k = engine + '|' + q.toLowerCase();
+  if (sugCache.has(k)) return sugCache.get(k);
+  const [url, pick] = (SUGGEST[engine] || SUGGEST.google)(encodeURIComponent(q));
+  try {
+    const res = await net.fetch(url, { signal: AbortSignal.timeout(1500), headers: { Accept: 'application/json' } });
+    const cs = /charset=([\w-]+)/i.exec(res.headers.get('content-type') || '')?.[1] || 'utf-8';
+    const j = JSON.parse(new TextDecoder(cs).decode(await res.arrayBuffer()));
+    const list = (pick(j) || []).filter(x => typeof x === 'string' && x.trim()).slice(0, 8);
+    sugCache.set(k, list); if (sugCache.size > 200) sugCache.delete(sugCache.keys().next().value);
+    return list;
+  } catch { return []; }
+}
+// Liste mélangée : suggestions du moteur, puis pages déjà visitées ou en favori qui correspondent
+exports.suggest2 = async (q, priv) => {
+  q = String(q || '').trim();
+  if (!q) return [];
+  const s = store.get('settings'), low = q.toLowerCase(), out = [];
+  const looksUrl = /^[a-z][\w+.-]*:\/\//i.test(q) || /^(localhost|[\w-]+(\.[\w-]+)+)(:\d+)?(\/.*)?$/i.test(q);
+  if (looksUrl) out.push({ type: 'url', text: q, url: /^[a-z][\w+.-]*:\/\//i.test(q) ? q : 'https://' + q });
+  const sites = [], seen = new Set();
+  if (low.length >= 2) for (const x of [...store.get('bookmarks').map(b => ({ ...b, bm: true })), ...store.get('history').slice(-1500).reverse()]) {
+    if (!x.url || seen.has(x.url) || !(x.url + ' ' + (x.title || '')).toLowerCase().includes(low)) continue;
+    seen.add(x.url); sites.push({ type: x.bm ? 'bookmark' : 'history', text: x.title || x.url, url: x.url });
+    if (sites.length === 3) break;
+  }
+  const rem = s.suggestOn !== false && !priv && !looksUrl ? await remote(q, s.engine) : [];
+  const qs = [...new Set([q, ...rem])].slice(0, 7).map(t => ({ type: 'search', text: t }));
+  return [...out, ...qs, ...sites].slice(0, 10);
+};
+
 // ---- Suggestions, sites les plus visités, fond d'écran personnel ----
 exports.suggest = q => {
   q = String(q || '').toLowerCase().trim();
@@ -146,6 +188,7 @@ exports.init = a => {
       case 'look': return api.look();
       case 'go': api.go(e.sender, String(arg.text ?? arg), arg.engine); break;
       case 'suggest': return exports.suggest(arg);
+      case 'suggest2': return exports.suggest2(arg);
       case 'top': return topSites();
       case 'clearData': await api.clearData(); break;
       case 'settings': {

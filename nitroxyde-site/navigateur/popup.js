@@ -17,9 +17,7 @@ const WIDTH = { menu: 344, vpn: 372 };
 const LANGS = [['fr', 'Français'], ['en', 'Anglais'], ['es', 'Espagnol'], ['de', 'Allemand'], ['it', 'Italien'], ['pt', 'Portugais'], ['nl', 'Néerlandais'],
   ['ar', 'Arabe'], ['tr', 'Turc'], ['pl', 'Polonais'], ['ru', 'Russe'], ['uk', 'Ukrainien'], ['zh-CN', 'Chinois'], ['ja', 'Japonais'], ['ko', 'Coréen'], ['hi', 'Hindi']];
 
-exports.toggle = async k => {
-  // un second clic sur le même bouton ferme le panneau (le clic a déjà provoqué sa fermeture par perte du focus)
-  if (kind === k && (pop?.getVisible() || Date.now() - closedAt < 250)) { hide(); return; }
+async function ensure() {
   const S = api.state;
   if (!hooked) {   // fermeture dès qu'on clique ailleurs (barre, page, autre fenêtre) ; une liste déroulante du panneau ne le ferme pas
     hooked = true;
@@ -35,6 +33,13 @@ exports.toggle = async k => {
     await new Promise(r => pop.webContents.once('did-finish-load', r));
     pop.webContents.send('theme', api.look());
   }
+}
+
+exports.toggle = async k => {
+  // un second clic sur le même bouton ferme le panneau (le clic a déjà provoqué sa fermeture par perte du focus)
+  if (kind === k && (pop?.getVisible() || Date.now() - closedAt < 250)) { hide(); return; }
+  const S = api.state;
+  await ensure();
   kind = k; hiddenAt = 0;
   place(420);
   pop.setVisible(true);
@@ -42,8 +47,49 @@ exports.toggle = async k => {
   pop.webContents.focus();
   pop.webContents.send('pop-open', k, await info());
 };
+// ---- Suggestions de la barre d'adresse : liste sous le champ, la saisie reste dans la barre ----
+let sug = { items: [], sel: -1, rect: null, n: 0, q: '' };
+exports.suggest = async ({ q, rect } = {}) => {
+  const n = ++sug.n;
+  q = String(q || '');
+  const items = q.trim() ? await require('./features').suggest2(q, !!api.state.active?.priv) : [];
+  if (n !== sug.n) return;   // une frappe plus récente est déjà partie
+  if (!items.length) { if (kind === 'suggest') hide(); return; }
+  await ensure();
+  if (n !== sug.n) return;
+  sug = { ...sug, items, sel: -1, rect, q };
+  kind = 'suggest'; hiddenAt = 0;
+  place(items.length * 38 + 20);
+  if (!pop.getVisible()) { pop.setVisible(true); api.state.win.contentView.addChildView(pop); }
+  pop.webContents.send('pop-open', 'suggest', { items, sel: -1, q });
+};
+// Flèches ↑ ↓ depuis la barre : la ligne choisie est surlignée et son texte remplace la saisie
+exports.suggestMove = d => {
+  if (kind !== 'suggest' || !pop?.getVisible() || !sug.items.length) return null;
+  const n = sug.items.length;
+  sug.sel += d;
+  if (sug.sel < -1) sug.sel = n - 1;
+  if (sug.sel > n - 1) sug.sel = -1;   // -1 : retour à la saisie d'origine
+  pop.webContents.send('pop-open', 'suggest', { items: sug.items, sel: sug.sel, q: sug.q });
+  const it = sug.items[sug.sel];
+  return it ? (it.url || it.text) : sug.q;
+};
+exports.suggestHide = () => { sug.n++; if (kind === 'suggest') hide(); };
+function pickSuggestion(i) {
+  const it = sug.items[i];
+  hide();
+  if (!it) return;
+  api.go(api.state.win.webContents, it.url || it.text);
+  try { api.state.win.webContents.send('url-blur'); } catch {}
+}
+
 function place(h) {
   if (!pop) return;
+  if (kind === 'suggest' && sug.rect) {   // sous le champ de recherche, à sa largeur
+    const [, H] = api.state.win.getContentSize(), r = sug.rect;
+    pop.setBounds({ x: Math.round(r.x - 6), y: Math.round(r.y + r.h + 2), width: Math.round(r.w + 12), height: Math.min(Math.round(h), H - r.y - r.h - 10) });
+    return;
+  }
   const [W, H] = api.state.win.getContentSize(), i = api.insets(), w = WIDTH[kind] || 344;
   const right = i.tabsR + (i.railLeft ? 0 : i.rail) + 6;
   const y = Math.max(40, i.top - 4);
@@ -72,7 +118,7 @@ async function info() {
   return {
     zoom: w ? Math.round(w.getZoomFactor() * 100) : 100, web: /^https?:/.test(u), translated: isTr(u), lang: s.transLang || 'fr', langs: LANGS,
     mode: s.mode, full: api.state.win.isFullScreen(), priv: !!api.state.active?.priv, version: app.getVersion(), netLimit: s.netLimit || 0,
-    speaking: !!api.state.active?.speaking, vpn: vpn.state(), profile: api.profile?.() || '', side: !!s.sidebar, keys: api.keys(),
+    speaking: !!api.state.active?.speaking, engine: s.engine || 'google', vpn: vpn.state(), profile: api.profile?.() || '', side: !!s.sidebar, keys: api.keys(),
   };
 }
 
@@ -87,6 +133,14 @@ async function command(cmd, a) {
   const s = store.get('settings'), w = wc();
   switch (cmd) {
     case 'size': place(+a || 400); return;
+    case 'pick': pickSuggestion(+a); return;
+    case 'engine': s.engine = String(a); store.save('settings'); api.applyLook(); return;
+    case 'delHist': {   // retirer une page de l'historique depuis la liste (✕)
+      const it = sug.items[+a];
+      if (it?.type === 'history') { const h = store.get('history'); store.set('history', h.filter(x => x.url !== it.url)); sug.items.splice(+a, 1); }
+      if (!sug.items.length) hide(); else pop.webContents.send('pop-open', 'suggest', { items: sug.items, sel: -1, q: sug.q });
+      return;
+    }
     case 'close': hide(); return;
     case 'info': return info();
     case 'act': hide(); api.run(String(a)); return;

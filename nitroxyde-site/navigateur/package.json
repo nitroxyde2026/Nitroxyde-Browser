@@ -1,6 +1,6 @@
 {
   "name": "nitroxyde-browser",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "description": "Nitroxyde Browser : navigateur basé sur Chromium, rapide et fluide (projet éducatif)",
   "main": "main.js",
   "scripts": {

@@ -4,17 +4,17 @@ const path = require('path');
 
 const DEFAULTS = {
   settings: {
-    engine: 'duckduckgo', adblock: true, strip: true, sleepMin: 3,
+    engine: 'google', suggestOn: true, adblock: true, strip: true, sleepMin: 3,
     theme: 'dark', wall: 'off', wallFile: '', wallV: 0,
     https: false, gpc: true, restore: true,
     news: true, newsSource: 'francetvinfo', stats: true, syncDir: '', downloadDir: '',
-    musicOn: true, musicStart: true, musicRepeat: true, musicTrack: '', musicVol: 0.3, musicAuto: true, custom: {},
+    musicOn: true, musicStart: true, musicRepeat: true, musicMinimize: true, musicBlur: false, musicTrack: '', musicVol: 0.3, musicAuto: true, custom: {},
     mode: 'normal', onboarded: false, tabsPos: 'top', anim: true, customCss: '', dns: 'off', dnsCustom: '', allow: [], dlSort: false,
-    aiModel: 'llama-3.3-70b-versatile', aiAuto: true, groqKey: '', openaiKey: '', geminiKey: '', claudeKey: '', aiProvider: 'groq', aiModels: {},
+    aiModel: 'openai/gpt-oss-120b', aiAuto: true, groqKey: '', openaiKey: '', geminiKey: '', claudeKey: '', aiProvider: 'groq', aiModels: {},
     musicSource: 'music', aiSource: 'chatgpt', ramBudgetMB: 1500, wallFavs: [], clock: true, notes: false, perf: false,
     sidebar: true, accent: '', clockStyle: 'digital', clock24: true, clockSec: false, weather: false, city: '', calendar: false, tasks: false,
     widgets: false, searchSize: 'm', searchShape: 'pill', cookies3: false, dlLimitKB: 0,
-    keys: {}, extensions: [], preSpecialWall: 'off', intro: '', winState: {}, sideW: 440, sideZoom: {}, updateUrl: 'https://nitroxyde.fr/version.json', updateSeen: '',
+    keys: {}, extensions: [], preSpecialWall: 'off', intro: '', winState: {}, sideW: 440, sideWs: {}, sideZoom: {}, updateUrl: 'https://nitroxyde.fr/version.json', updateSeen: '',
     pwOn: true, pwNever: [], transLang: 'fr', netLimit: 0, cookieBanners: true, vpn: {}, vpnUser: '', vpnPass: '', crashGuard: true,
   },
   history: [],
